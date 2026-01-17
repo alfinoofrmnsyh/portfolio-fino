@@ -125,7 +125,7 @@ function App() {
         <div className="hero grid md:grid-cols-2 items-center pt-20 md:pt-32 xl:gap-0 gap-6 grid-cols-1 min-h-[80vh]">
           <div className="animate__animated animate__fadeInUp animate__delay-3s">
             <div className="flex items-center gap-3 mb-6 bg bg-zinc-800 w-fit p-4 rounded-2xl">
-              <img src="./assets/fino-profile.png" className="w-10 rounded-md" />
+              <img src="/assets/fino-profile.png" className="w-10 rounded-md" />
               <q>Life only once, make it extraordinary</q>
             </div>
             <h1 className="text-5xl font-bold mb-6">
@@ -139,7 +139,7 @@ function App() {
               className=" mb-6"
             />
             <div className="flex items-center sm:gap-4 gap-2">
-              <a href="./assets/cv-fino.pdf" download="Alfino_Firmansyah_CV.pdf" className="font-semibold bg-[#1a1a1a] p-4 px-6 rounded-full border border-gray-700 hover:bg-[#222] transition-colors">
+              <a href="/assets/cv-fino.pdf" download="Alfino_Firmansyah_CV.pdf" className="font-semibold bg-[#1a1a1a] p-4 px-6 rounded-full border border-gray-700 hover:bg-[#222] transition-colors">
                 <ShinyText text="Download CV" disabled={false} speed={3} />
               </a>
               <a href="#project" className="font-semibold bg-[#1a1a1a] p-4 px-6 rounded-full border border-gray-700 hover:bg-[#222] transition-colors">
@@ -152,7 +152,7 @@ function App() {
             <ProfileCard
               name="Alfino Firmansyah"
               title="Application and Web Developer"
-              avatarUrl="./assets/fino-profile.png"
+              avatarUrl="/assets/fino-profile.png"
               enableTilt={true}
               showUserInfo={true}
             />
