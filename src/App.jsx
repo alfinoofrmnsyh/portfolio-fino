@@ -141,7 +141,6 @@ function App() {
                 target="_blank" 
                 rel="noopener noreferrer"
                 onClick={(e) => {
-                  // Jika masih gagal download, paksa buka di tab baru
                   if (window.location.hostname !== "localhost") {
                     console.log("Downloading from production...");
                   }
