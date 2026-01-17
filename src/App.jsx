@@ -2,19 +2,15 @@ import { useRef, useState, useEffect } from "react";
 import ProfileCard from "./components/ProfileCard/ProfileCard";
 import ShinyText from "./components/ShinyText/ShinyText";
 import BlurText from "./components/BlurText/BlurText";
-import ScrambledText from "./components/ScrambledText/ScrambledText";
-import SplitText from "./components/SplitText/SplitText";
 import Lanyard from "./components/Lanyard/Lanyard";
-import GlassIcons from "./components/GlassIcons/GlassIcons";
 import { listTools, listProyek } from "./data";
-import ChromaGrid from "./components/ChromaGrid/ChromaGrid";
 import ProjectModal from "./components/ProjectModal/ProjectModal"; // <-- IMPORT MODAL
 import LiquidEther from './components/LiquidEther/LiquidEther';
 import AOS from 'aos';
-import ChatRoom from "./components/ChatRoom";
 import 'aos/dist/aos.css'; 
 import GooeyNav from './components/GooeyNav/GooeyNav.jsx';
 import CardSwap, {Card} from './components/CardSwap/CardSwap.jsx';
+import myCV from "./assets/cv-fino.pdf";
 
 AOS.init();
 
@@ -140,7 +136,7 @@ function App() {
             />
             <div className="flex items-center sm:gap-4 gap-2">
               <a 
-                href="/cv-fino.pdf" 
+                href={myCV} // Menggunakan variabel hasil import
                 download="Alfino_Firmansyah_CV.pdf" 
                 target="_blank" 
                 rel="noopener noreferrer"
