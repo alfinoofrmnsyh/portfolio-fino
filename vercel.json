@@ -6,10 +6,6 @@
       "destination": "/assets/$1"
     },
     {
-      "source": "/cv-fino.pdf",
-      "destination": "/cv-fino.pdf"
-    },
-    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
