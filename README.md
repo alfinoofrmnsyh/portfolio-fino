@@ -1,4 +1,4 @@
-# Portofolio Web — [Faris Edrik P / rissss21]
+# Portofolio Web — [Alfino Firmansyah]
 
 Selamat datang di portofolio web pribadi saya! 🌐  
 Dibuat dengan React + Vite, ini adalah showcase dari project, skill, dan karya yang ingin saya bagikan.
@@ -48,14 +48,13 @@ Jika sudah di-deploy (contoh: GitHub Pages, Netlify, Vercel), kamu bisa tambahka
 
 ## Tentang Saya
 
-Hai, saya Faris Edrik P (username GitHub: `rissss21`).
+Hai, saya Alfino Firmansyah (username GitHub: `alfinoofrmnsyh`).
 Saya seorang Developer yang suka bikin aplikasi web ringan dengan tampilan modern dan performa tinggi. Scroll aja di project saya, dan jangan sungkan untuk reach out kalau ada pertanyaan!
 
-* **Email:** [email\_farisedrik21@gmail.com](mailto:email_farisedrik21@gmail.com)
-* **LinkedIn:** [linkedin.com/in/farisedp](https://www.linkedin.com/in/farisedp/)
-* **Instagram:** @farisedrikprayoga
+* **Email:** [email\_alfinofrmnsyh@gmail.com](mailto:alfinofrmnsyh@gmail.com)
+* **LinkedIn:** [linkedin.com/in/alfino-firmansyah](https://www.linkedin.com/in/alfino-firmansyah-b8b71017a/)
+* **Instagram:** @alfinofrmnsyh
 
 ---
 
 
-[1]: https://github.com/rissss21/portofolio "GitHub - rissss21/portofolio"
