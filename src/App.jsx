@@ -79,20 +79,20 @@ function App() {
   return (
   <>
     {/* NAVBAR CONTAINER */}
-    <div className={`fixed top-4 md:top-6 left-1/2 -translate-x-1/2 z-[100] w-[95%] sm:w-fit px-2 sm:px-4 py-2 rounded-full transition-all duration-500 ${
+    <div className={`fixed top-2 md:top-6 left-1/2 -translate-x-1/2 z-[100] w-auto max-w-[90%] px-2 py-1 rounded-full transition-all duration-500 ${
         scrolled 
-        ? "bg-black/60 backdrop-blur-xl border border-white/20 shadow-2xl" 
+        ? "bg-black/70 backdrop-blur-xl border border-white/10 shadow-xl" 
         : "bg-transparent border border-transparent shadow-none"
       }`}>
       <GooeyNav
           items={navItems}
-          particleCount={window.innerWidth < 640 ? 8 : 15} // Kurangi partikel di mobile
-          particleDistances={window.innerWidth < 640 ? [40, 5] : [90, 10]} // Perkecil jarak di mobile
-          particleR={window.innerWidth < 640 ? 50 : 100} // Perkecil radius di mobile
+          particleCount={window.innerWidth < 640 ? 6 : 12} // Kurangi jumlah partikel
+          particleDistances={window.innerWidth < 640 ? [35, 5] : [90, 10]} // Jauh lebih rapat di mobile
+          particleR={window.innerWidth < 640 ? 40 : 100} // Radius gooey lebih kecil
           initialActiveIndex={0}
-          animationTime={600}
-          timeVariance={300}
-          colors={[1, 2, 3, 1, 2, 3, 1, 4]}
+          animationTime={500}
+          timeVariance={200}
+          colors={[1, 2, 3, 1, 2, 3]}
       />
     </div>
     <div className="relative w-full overflow-hidden">

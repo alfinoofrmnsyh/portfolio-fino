@@ -230,3 +230,12 @@
     opacity: 0;
   }
 }
+
+@media (max-width: 640px) {
+  /* Mengecilkan teks di dalam GooeyNav */
+  .gooey-nav-item, nav a { 
+    font-size: 11px !important;
+    padding: 4px 8px !important;
+    letter-spacing: 0.5px;
+  }
+}
