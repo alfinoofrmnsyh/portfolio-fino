@@ -136,10 +136,16 @@ function App() {
             />
             <div className="flex items-center sm:gap-4 gap-2">
               <a 
-                href={myCV} // Menggunakan variabel hasil import
+                href={`${window.location.origin}/cv-fino.pdf`} // Menghubungkan langsung ke URL domain utama
                 download="Alfino_Firmansyah_CV.pdf" 
                 target="_blank" 
                 rel="noopener noreferrer"
+                onClick={(e) => {
+                  // Jika masih gagal download, paksa buka di tab baru
+                  if (window.location.hostname !== "localhost") {
+                    console.log("Downloading from production...");
+                  }
+                }}
                 className="font-semibold bg-[#1a1a1a] p-4 px-6 rounded-full border border-gray-700 hover:bg-[#222] transition-colors"
               >
                 <ShinyText text="Download CV" disabled={false} speed={3} />
