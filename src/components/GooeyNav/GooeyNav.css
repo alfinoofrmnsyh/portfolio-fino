@@ -232,10 +232,19 @@
 }
 
 @media (max-width: 640px) {
-  /* Mengecilkan teks di dalam GooeyNav */
-  .gooey-nav-item, nav a { 
-    font-size: 11px !important;
-    padding: 4px 8px !important;
-    letter-spacing: 0.5px;
+  /* Gunakan selector yang lebih panjang agar lebih kuat */
+  .gooey-nav-container nav ul li a, 
+  .gooey-nav-container nav ul li span,
+  .gooey-nav-item { 
+    font-size: 9px !important; /* Perkecil ke 9px untuk testing */
+    padding: 2px 6px !important;
+    letter-spacing: 0px !important;
+    white-space: nowrap;
+  }
+
+  /* Perkecil jarak antar menu (gap) */
+  .gooey-nav-container nav ul {
+    gap: 0.5em !important; 
+    padding: 0 0.5em !important;
   }
 }
