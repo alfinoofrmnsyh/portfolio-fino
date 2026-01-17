@@ -1,1 +1,17 @@
-{ "cleanUrls": true, "rewrites": [ { "source": "/assets/(.*)", "destination": "/assets/$1" }, { "source": "/(.*)", "destination": "/index.html" } ] } 
+{
+  "cleanUrls": true,
+  "rewrites": [
+    {
+      "source": "/assets/(.*)",
+      "destination": "/assets/$1"
+    },
+    {
+      "source": "/cv-fino.pdf",
+      "destination": "/cv-fino.pdf"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
