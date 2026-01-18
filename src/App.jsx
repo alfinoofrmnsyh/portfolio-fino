@@ -251,7 +251,7 @@ function App() {
                   {listProyek.map((proyek) => (
                     <Card key={proyek.id}>
                       <div 
-                        className="relative w-[370px] md:w-[500px] bg-[#111] rounded-2xl overflow-hidden cursor-pointer group shadow-2xl"
+                        className="relative w-[430px] md:w-[500px] bg-[#111] rounded-2xl overflow-hidden cursor-pointer group shadow-2xl"
                         style={{ 
                           border: `1px solid #8708a388`,
                           boxShadow: `0 10px 30px -10px #8708a366`

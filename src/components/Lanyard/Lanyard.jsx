@@ -126,8 +126,8 @@ function Band({ maxSpeed = 50, minSpeed = 0 }) {
         <RigidBody position={[2, 0, 0]} ref={card} {...segmentProps} type={dragged ? 'kinematicPosition' : 'dynamic'}>
           <CuboidCollider args={[0.8, 1.125, 0.01]} />
           <group
-            scale={isSmall ? 4.5 : 2.25} 
-            position={isSmall ? [0, -4, -0.05] : [0, -1.2, -0.05]}
+            scale={isSmall ? 5.5 : 4} 
+            position={isSmall ? [0, -5.2, -0.05] : [0, -3.4, -0.05]}
             onPointerOver={() => hover(true)}
             onPointerOut={() => hover(false)}
             onPointerUp={(e) => (e.target.releasePointerCapture(e.pointerId), drag(false))}
