@@ -35,18 +35,18 @@ const ProjectModal = ({ isOpen, onClose, project }) => {
     // Overlay
     <div
       onClick={handleClose}
-      className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 p-4 transition-opacity duration-300"
+      className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-9999 p-4  transition-opacity duration-300"
     >
       {/* Modal Content */}
       <div
         onClick={(e) => e.stopPropagation()} // Mencegah modal tertutup saat diklik di dalam
-        className={`bg-zinc-900 border border-violet-500/50 rounded-2xl shadow-2xl shadow-violet-500/20 w-full max-w-lg transform transition-transform duration-300 ${isClosing ? 'animate-out' : 'animate-in'}`}
+        className={`bg-zinc-900 border border-violet-500/50 rounded-2xl shadow-2xl shadow-violet-500/20 w-full max-w-xl transform transition-transform duration-300 ${isClosing ? 'animate-out' : 'animate-in'}`}
       >
         {/* --- GAMBAR PROYEK --- */}
         <img 
           src={project.image} 
           alt={project.title} 
-          className="w-full h-56 object-cover rounded-t-2xl"
+          className="w-full h-73 object-cover rounded-t-2xl"
         />
 
         <div className="p-6 flex flex-col gap-4">
@@ -71,9 +71,15 @@ const ProjectModal = ({ isOpen, onClose, project }) => {
                 rel="noopener noreferrer"
                 className="mt-4 inline-flex items-center justify-center gap-2 font-semibold bg-violet-600 p-3 px-5 rounded-full w-full cursor-pointer border border-transparent hover:bg-violet-700 transition-colors"
             >
-                <FiGithub />
-                <span>Source Code</span>
+                
+                <span>View Project</span>
             </a>
+            <button
+              onClick={handleClose}
+              className="flex-1 inline-flex items-center justify-center gap-2 font-semibold bg-zinc-800 p-3 px-5 rounded-full cursor-pointer border border-zinc-700 hover:bg-zinc-700 transition-all text-zinc-300 active:scale-95"
+            >
+              <span>Back to Menu</span>
+            </button>
         </div>
       </div>
        {/* CSS untuk animasi */}
