@@ -232,19 +232,19 @@
 }
 
 @media (max-width: 640px) {
-  /* Gunakan selector yang lebih panjang agar lebih kuat */
-  .gooey-nav-container nav ul li a, 
-  .gooey-nav-container nav ul li span,
-  .gooey-nav-item { 
-    font-size: 9px !important; /* Perkecil ke 9px untuk testing */
-    padding: 2px 6px !important;
-    letter-spacing: 0px !important;
-    white-space: nowrap;
+
+  .gooey-nav-container nav {
+    height: 50px !important; 
+    align-items: center;
   }
 
-  /* Perkecil jarak antar menu (gap) */
-  .gooey-nav-container nav ul {
-    gap: 0.5em !important; 
-    padding: 0 0.5em !important;
+  .gooey-nav-container .effect.text {
+    display: none !important;
+  }
+  .gooey-nav-container nav ul li a {
+    font-size: 13px !important;
+    padding: 4px 6px !important;
+    position: relative;
+    z-index: 10; /* Menaruh teks di lapisan paling atas */
   }
 }

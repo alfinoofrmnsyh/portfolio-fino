@@ -10,7 +10,7 @@ import AOS from 'aos';
 import 'aos/dist/aos.css'; 
 import GooeyNav from './components/GooeyNav/GooeyNav.jsx';
 import CardSwap, {Card} from './components/CardSwap/CardSwap.jsx';
-import myCV from "./assets/cv-fino.pdf";
+
 
 AOS.init();
 
@@ -79,11 +79,11 @@ function App() {
   return (
   <>
     {/* NAVBAR CONTAINER */}
-    <div className={`fixed top-2 md:top-6 left-1/2 -translate-x-1/2 z-[100] w-auto max-w-[90%] px-2 py-1 rounded-full transition-all duration-500 ${
-        scrolled 
-        ? "bg-black/70 backdrop-blur-xl border border-white/10 shadow-xl" 
-        : "bg-transparent border border-transparent shadow-none"
-      }`}>
+<div className={`fixed top-2 md:top-6 left-1/2 -translate-x-1/2 z-[100] w-auto max-w-[100%] px-2 py-1 rounded-full transition-all duration-500 ${
+    scrolled 
+    ? "bg-black/70 backdrop-blur-xl border border-white/10 shadow-xl" 
+    : "bg-transparent border border-transparent shadow-none"
+  }`}>
       <GooeyNav
           items={navItems}
           particleCount={window.innerWidth < 640 ? 6 : 12} // Kurangi jumlah partikel
@@ -242,16 +242,16 @@ function App() {
             <div className="w-full lg:w-2/3">
               <div style={{ height: '200px', position: 'relative' }} className="flex justify-center items-center overflow-visible">
                 <CardSwap
-                  ref={cardSwapRef} // <--- Pasang Ref di sini
+                  ref={cardSwapRef} 
                   cardDistance={60}
                   verticalDistance={40} 
-                  delay={3000} // Jeda swap otomatis
+                  delay={3000} 
                   pauseOnHover={true}
                 >
                   {listProyek.map((proyek) => (
                     <Card key={proyek.id}>
                       <div 
-                        className="relative w-[320px] md:w-[480px] bg-[#111] rounded-2xl overflow-hidden cursor-pointer group shadow-2xl"
+                        className="relative w-[370px] md:w-[500px] bg-[#111] rounded-2xl overflow-hidden cursor-pointer group shadow-2xl"
                         style={{ 
                           border: `1px solid #8708a388`,
                           boxShadow: `0 10px 30px -10px #8708a366`
@@ -268,7 +268,7 @@ function App() {
                           <p className="text-zinc-400 text-sm mb-6 line-clamp-2">{proyek.subtitle}</p>
                           <div className="flex justify-between items-center">
                             <span className="text-xs font-bold px-4 py-2 rounded-full uppercase tracking-wider text-[#8708a3] border border-[#8708a344]">View Details</span>
-                            <div className="text-zinc-500 text-xs font-mono">ID: {proyek.id.toString().padStart(2, '0')}</div>
+                           
                           </div>
                         </div>
                       </div>
