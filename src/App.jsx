@@ -10,6 +10,7 @@ import AOS from 'aos';
 import 'aos/dist/aos.css'; 
 import GooeyNav from './components/GooeyNav/GooeyNav.jsx';
 import CardSwap, {Card} from './components/CardSwap/CardSwap.jsx';
+import TextPressure from "./components/TextPressure/TextPressure.jsx";
 
 
 AOS.init();
@@ -68,11 +69,11 @@ function App() {
   return (
   <>
     {/* NAVBAR CONTAINER */}
-<div className={`fixed top-2 md:top-6 left-1/2 -translate-x-1/2 z-[100] w-auto max-w-[100%] px-2 py-1 rounded-full transition-all duration-500 ${
-    scrolled 
-    ? "bg-black/70 backdrop-blur-xl border border-white/10 shadow-xl" 
-    : "bg-transparent border border-transparent shadow-none"
-  }`}>
+      <div className={`fixed top-2 md:top-6 left-1/2 -translate-x-1/2 z-[100] w-auto max-w-[100%] px-2 py-1 rounded-full transition-all duration-500 ${
+      scrolled 
+      ? "bg-black/70 backdrop-blur-xl border border-white/10 shadow-xl" 
+      : "bg-transparent border border-transparent shadow-none"
+      }`}>
       <GooeyNav
           items={navItems}
           particleCount={window.innerWidth < 640 ? 6 : 12} // Kurangi jumlah partikel
@@ -106,54 +107,57 @@ function App() {
       </div>
       <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        {/* HERO SECTION */}
-        <div className="hero grid md:grid-cols-2 items-center pt-20 md:pt-32 xl:gap-0 gap-6 grid-cols-1 min-h-[80vh]">
-          <div className="animate__animated animate__fadeInUp animate__delay-3s">
-            <div className="flex items-center gap-3 mb-6 bg bg-zinc-800 w-fit p-4 rounded-2xl">
-              <img src="/assets/fino-profile.png" className="w-10 rounded-md" />
-              <q>Life only once, make it extraordinary</q>
-            </div>
-            <h1 className="text-5xl font-bold mb-6">
-              <ShinyText text="Hi I'm Alfino Firmansyah" disabled={false} speed={3} className='custom-class' />
-            </h1>
-            <BlurText
-              text="an IT professional who enjoys building reliable systems and solving real-world problems through technology. I work as a Programmer Expert at Dinas Komunikasi, Informasi, Persandian, dan Statistik Kab. Bekasi and as a Full-Stack Developer on government SPBE projects. I’m experienced in ERP systems, web & mobile development, and enjoy collaborating across teams to deliver impactful digital solutions."
-              delay={150}
-              animateBy="words"
-              direction="top"
-              className=" mb-6"
-            />
-            <div className="flex items-center sm:gap-4 gap-2">
-              <a 
-                href={`${window.location.origin}/assets/cv-fino.pdf`} 
-                download="Alfino_Firmansyah_CV.pdf" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                onClick={(e) => {
-                  if (window.location.hostname !== "localhost") {
-                    console.log("Downloading from production...");
-                  }
-                }}
-                className="font-semibold bg-[#1a1a1a] p-4 px-6 rounded-full border border-gray-700 hover:bg-[#222] transition-colors"
-              >
-                <ShinyText text="Download CV" disabled={false} speed={3} />
-              </a>
-              <a href="#project" className="font-semibold bg-[#1a1a1a] p-4 px-6 rounded-full border border-gray-700 hover:bg-[#222] transition-colors">
-                <ShinyText text="Explore My Projects" disabled={false} speed={3} />
-              </a>
-            </div>
-          </div>
+      {/* HERO SECTION - Diubah menjadi flex-col dengan items-center & text-center */}
+        <div className="hero flex flex-col items-center justify-center min-h-screen px-6 text-center">
+          <div className="animate__animated animate__fadeInUp animate__delay-1s max-w-4xl flex flex-col items-center">
+            
 
-          <div className="md:ml-auto animate__animated animate__fadeInUp animate__delay-4s">
-            <ProfileCard
-              name="Alfino Firmansyah"
-              title="Application and Web Developer"
-              avatarUrl="/assets/fino-profile.png"
-              enableTilt={true}
-              showUserInfo={true}
-            />
+            {/* Text Pressure Container - Pastikan lebar penuh untuk rata tengah */}
+            <div style={{ position: 'relative', height: '180px', width: '100%' }} className="mb-5 mt-35">
+              <TextPressure
+                text="I'm Fino"
+                flex
+                alpha={false}
+                stroke={false}
+                width
+                weight
+                italic
+                textColor="#ffffff"
+                strokeColor="#5227FF"
+                minFontSize={48}
+              />
+            </div>
+
+            {/* Deskripsi - Menggunakan mx-auto agar box-nya di tengah */}
+            <div className="max-w-2xl mb-12 mx-auto">
+              <BlurText
+                text="Programmer Expert at Diskominfosantik Kab. Bekasi. Full-Stack Developer specializing in ERP systems and impactful digital solutions for government SPBE projects."
+                delay={50}
+                animateBy="words"
+                direction="top"
+                className="text-lg md:text-xl text-zinc-400 leading-relaxed justify-center text-center"
+              />
+            </div>
+
+            {/* Buttons - justify-center agar tombol di tengah */}
+            <div className="flex flex-wrap items-center justify-center gap-6">
+              <a 
+                href="/assets/cv-fino.pdf" 
+                download="Alfino_Firmansyah_CV.pdf"
+                className="group relative font-bold bg-white text-black p-3 px-8 rounded-full hover:bg-zinc-200 transition-all active:scale-95 shadow-lg text-md"
+              >
+                Download CV
+              </a>
+              
+              <a 
+                href="#project" 
+                className="font-bold bg-zinc-900 text-white p-3 px-8  rounded-full border border-zinc-700 hover:bg-zinc-800 transition-all active:scale-95 text-md"
+              >
+                <ShinyText text="View Projects" disabled={false} speed={3} />
+              </a>
+            </div>
           </div>
-        </div> 
+        </div>
 
         {/* ABOUT ME SECTION */}
         <div className="mt-15 mx-auto w-full max-w-[1600px] rounded-3xl border-[5px] border-violet-500/40 shadow-[0_0_30px_rgba(168,85,247,0.4)] bg-gradient-to-br from-[#0a0a0a] via-[#111111] to-[#1a1a1a] p-6" id="about">
@@ -170,8 +174,14 @@ function App() {
                 <ShinyText text="Working with heart, creating with mind." speed={3} className="text-sm md:text-base text-violet-400" />
             </div>
 
-            <div className="basis-full md:basis-5/12 pl-0 md:pl-8 overflow-hidden flex justify-center min-h-[500px]">
-              <Lanyard position={[0, 2, 15]} gravity={[0, -40, 0]} />
+           <div className="basis-full md:basis-5/12 pl-0 md:pl-8 overflow-visible flex justify-center items-center min-h-[70vh] md:min-h-[80vh]">
+                <ProfileCard
+                  name="Alfino Firmansyah"
+                  title="Application and Web Developer"
+                  avatarUrl="/assets/fino-profile.png"
+                  enableTilt={true}
+                  showUserInfo={true}
+                />
             </div>
           </div>
         </div>
