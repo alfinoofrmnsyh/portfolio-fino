@@ -7,62 +7,14 @@ import { motion, AnimatePresence } from "framer-motion"
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
-  const [logoColor, setLogoColor] = useState<"white" | "dark">("dark")
 
   useEffect(() => {
     const handleScroll = () => {
-      const currentScroll = window.scrollY
-      setScrolled(currentScroll >= 300)
-
-      let newColor: "white" | "dark" = "dark"
-
-      if (currentScroll > 2) {
-        newColor = "white"
-      }
-
-      const headerOffset = 100 // Approximate header height
-
-      const masonry = document.getElementById("masonry-gallery")
-      if (masonry) {
-        const rect = masonry.getBoundingClientRect()
-        if (rect.top <= headerOffset && rect.bottom > headerOffset) {
-          const progress = (headerOffset - rect.top) / rect.height
-          if (progress > 0.65) {
-            newColor = "dark"
-          }
-        }
-      }
-
-      const helmets = document.getElementById("helmets")
-      if (helmets) {
-        const rect = helmets.getBoundingClientRect()
-        if (rect.top <= headerOffset && rect.bottom > headerOffset) {
-          newColor = "white"
-        }
-      }
-
-      const social = document.getElementById("social-section")
-      if (social) {
-        const rect = social.getBoundingClientRect()
-        if (rect.top <= headerOffset && rect.bottom > headerOffset) {
-          newColor = "dark"
-        }
-      }
-
-      const techSpecs = document.getElementById("tech-specs")
-      if (techSpecs) {
-        const rect = techSpecs.getBoundingClientRect()
-        if (rect.top <= headerOffset && rect.bottom > headerOffset) {
-          newColor = "dark"
-        }
-      }
-
-      setLogoColor(newColor)
+      setScrolled(window.scrollY >= 50)
     }
 
     handleScroll()
-
-    window.addEventListener("scroll", handleScroll)
+    window.addEventListener("scroll", handleScroll, { passive: true })
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
@@ -80,40 +32,43 @@ export default function Header() {
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          scrolled ? "backdrop-blur-md" : "bg-transparent"
+          scrolled ? "bg-fino-dark/80 backdrop-blur-md py-3" : "bg-transparent py-4 md:py-6"
         }`}
       >
-        <div className="mx-auto px-6 md:px-12 flex items-center justify-between h-16">
+        <div className="mx-auto px-4 sm:px-6 md:px-12 flex items-center justify-between">
+          {/* Logo / Nama Utama Responsif */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.2 }}
-            className="flex flex-col justify-center items-start mix-blend-difference"
+            className="flex flex-col justify-center items-start mix-blend-difference z-50"
           >
-            <h1 className="font-brier text-4xl leading-none mt-1 tracking-tight font-bold text-white">
-              Alfino Firmansyah
+            <h1 className="font-brier text-xl xs:text-2xl sm:text-3xl md:text-4xl leading-none tracking-tight font-bold text-white whitespace-nowrap">
+              ALFINO FIRMANSYAH
             </h1>
           </motion.div>
 
+          {/* Tombol Hamburger Menu */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 }}
-            className="flex items-center gap-4 mix-blend-difference"
+            className="flex items-center gap-4 mix-blend-difference z-50"
           >
             <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => setMenuOpen(!menuOpen)}
-              className="p-2 bg-fino-dark/80 border border-white/30 hover:bg-fino-dark rounded-lg transition-colors text-white px-3 py-2.5"
-              aria-label="Menu"
+              className="p-2 sm:p-2.5 bg-fino-dark/80 border border-white/30 hover:bg-fino-dark rounded-lg transition-colors text-white flex items-center justify-center min-w-[44px] min-h-[44px]"
+              aria-label="Toggle Menu"
             >
-              {menuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {menuOpen ? <X className="w-5 h-5 sm:w-6 sm:h-6" /> : <Menu className="w-5 h-5 sm:w-6 sm:h-6" />}
             </motion.button>
           </motion.div>
         </div>
       </motion.header>
 
+      {/* Fullscreen Mobile Overlay Navigation */}
       <AnimatePresence>
         {menuOpen && (
           <motion.div
@@ -121,7 +76,7 @@ export default function Header() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="fixed inset-0 bg-fino-dark/95 backdrop-blur-xl z-40 flex items-center justify-center"
+            className="fixed inset-0 bg-fino-dark/95 backdrop-blur-xl z-40 flex flex-col justify-center items-center px-6 h-[100dvh] overflow-y-auto"
             onClick={() => setMenuOpen(false)}
           >
             <motion.nav
@@ -129,13 +84,14 @@ export default function Header() {
               animate="open"
               exit="closed"
               variants={{
-                open: { transition: { staggerChildren: 0.1, delayChildren: 0.2 } },
+                open: { transition: { staggerChildren: 0.08, delayChildren: 0.15 } },
                 closed: { transition: { staggerChildren: 0.05, staggerDirection: -1 } },
               }}
-              className="text-center"
+              className="text-center w-full max-w-lg my-auto py-12"
+              onClick={(e) => e.stopPropagation()}
             >
-              <motion.ul className="space-y-6 text-4xl md:text-6xl font-black uppercase text-white">
-                {["HOME", "MISSION", "GALLERY", "HELMETS", "STORE", "CONTACT"].map((item, index) => (
+              <motion.ul className="space-y-4 sm:space-y-6 text-3xl xs:text-4xl sm:text-5xl md:text-6xl font-black uppercase text-white">
+                {["HOME", "MISSION", "GALLERY", "HELMETS", "STORE", "CONTACT"].map((item) => (
                   <motion.li
                     key={item}
                     variants={{
@@ -145,7 +101,7 @@ export default function Header() {
                   >
                     <a
                       href={`#${item.toLowerCase()}`}
-                      className="inline-block hover:text-fino-accent transition-colors duration-300 hover:scale-110 transform"
+                      className="inline-block hover:text-fino-accent transition-colors duration-300 hover:scale-105 transform active:scale-95"
                       onClick={() => setMenuOpen(false)}
                     >
                       {item}
@@ -159,14 +115,14 @@ export default function Header() {
                   open: { opacity: 1, y: 0 },
                   closed: { opacity: 0, y: 20 },
                 }}
-                className="mt-12 flex justify-center gap-6"
+                className="mt-8 sm:mt-12 flex justify-center gap-4 sm:gap-6"
               >
                 {["INSTAGRAM", "TIKTOK", "YOUTUBE"].map((social) => (
                   <motion.a
                     key={social}
                     whileHover={{ scale: 1.1, color: "#c8f550" }}
                     href="#"
-                    className="text-sm font-bold text-white/60 hover:text-fino-accent transition-colors"
+                    className="text-xs sm:text-sm font-bold text-white/60 hover:text-fino-accent transition-colors"
                   >
                     {social}
                   </motion.a>

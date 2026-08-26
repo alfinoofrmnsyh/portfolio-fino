@@ -26,27 +26,18 @@ export default function Preloader() {
         <motion.div
           initial={{ y: 0 }}
           exit={{ y: "-100%", transition: { duration: 0.8, ease: [0.76, 0, 0.24, 1] } }}
-          className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-fino-dark text-fino-accent"
+          className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-fino-dark text-fino-accent px-4 overflow-hidden"
         >
-          {/* Container dibuat tanpa overflow-hidden */}
-          <div className="relative flex items-center justify-center pt-6">
+          <div className="relative flex items-center justify-center pt-4 sm:pt-6 w-full max-w-7xl">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="relative flex items-center justify-center"
+              className="relative flex items-center justify-center w-full"
             >
-              {/* Teks Loading berada presisi di atas tengah */}
-              <motion.span
-                initial={{ opacity: 0, scale: 0 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.5, type: "spring" }}
-                className="absolute -top-7 md:-top-12 left-1/2 -translate-x-1/2 font-brier text-xl md:text-3xl font-[family-name:var(--font-oswald)]  whitespace-nowrap"
-              >
-                SOFTWARE ENGINEER
-              </motion.span>
 
-              {/* Teks Nama Utama */}
+
+              {/* Nama Utama: Ukuran font disesuaikan dari text-2xl/3xl pada mobile */}
               <motion.span
                 animate={{
                   backgroundPosition: ["0% center", "200% center"],
@@ -56,7 +47,7 @@ export default function Preloader() {
                   repeat: Infinity,
                   ease: "linear",
                 }}
-                className="font-brier text-6xl md:text-8xl lg:text-9xl font-bold uppercase tracking-tighter bg-gradient-to-r from-fino-accent via-white via-50% to-fino-accent bg-[length:200%_auto] bg-clip-text text-transparent select-none"
+                className="font-brier text-2xl xs:text-3xl sm:text-5xl md:text-7xl lg:text-9xl font-bold uppercase tracking-tighter bg-gradient-to-r from-fino-accent via-white via-50% to-fino-accent bg-[length:200%_auto] bg-clip-text text-transparent select-none whitespace-nowrap text-center"
               >
                 ALFINO FIRMANSYAH
               </motion.span>

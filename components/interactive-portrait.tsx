@@ -25,7 +25,6 @@ export default function InteractivePortrait() {
     }
 
     const scene = new THREE.Scene()
-
     const camera = new THREE.OrthographicCamera(width / -2, width / 2, height / 2, height / -2, 0.1, 1000)
     camera.position.z = 1
 
@@ -70,20 +69,47 @@ export default function InteractivePortrait() {
           handlePointerMove(event.clientX, event.clientY)
         }
 
-        const handleTouchMove = (event: TouchEvent) => {
-          if (event.touches.length > 0) {
-            handlePointerMove(event.touches[0].clientX, event.touches[0].clientY)
-          }
-        }
-
         const handleMouseLeave = () => {
           this.uniforms.pointer.value.setScalar(10)
         }
 
+        // Variable untuk membedakan Scroll vs Interactive Blob pada Mobile
+        let touchStartX = 0
+        let touchStartY = 0
+        let isVerticalScrolling = false
+
+        const handleTouchStart = (event: TouchEvent) => {
+          if (event.touches.length > 0) {
+            touchStartX = event.touches[0].clientX
+            touchStartY = event.touches[0].clientY
+            isVerticalScrolling = false
+          }
+        }
+
+        const handleTouchMove = (event: TouchEvent) => {
+          if (event.touches.length > 0) {
+            const currentX = event.touches[0].clientX
+            const currentY = event.touches[0].clientY
+            const diffX = Math.abs(currentX - touchStartX)
+            const diffY = Math.abs(currentY - touchStartY)
+
+            // Jika pergeseran dominan Vertikal (> 8px), batalkan trigger blob agar user bisa scroll
+            if (diffY > diffX && diffY > 8) {
+              isVerticalScrolling = true
+              handleMouseLeave()
+              return
+            }
+
+            if (!isVerticalScrolling) {
+              handlePointerMove(currentX, currentY)
+            }
+          }
+        }
+
         container.addEventListener("mousemove", handleMouseMove)
         container.addEventListener("mouseleave", handleMouseLeave)
+        container.addEventListener("touchstart", handleTouchStart, { passive: true })
         container.addEventListener("touchmove", handleTouchMove, { passive: true })
-        container.addEventListener("touchstart", handleTouchMove, { passive: true })
         container.addEventListener("touchend", handleMouseLeave)
 
         this.rtScene = new THREE.Mesh(
@@ -153,22 +179,28 @@ export default function InteractivePortrait() {
     const blob = new Blob(renderer)
 
     const textureLoader = new THREE.TextureLoader()
-    const baseTexture = textureLoader.load("/images/hero-off.png", (texture) => {
-      const img = texture.image
-      const imgAspect = img.width / img.height
-      const containerAspect = width / height
+    const updatePlaneGeometries = (imgAspect: number, containerW: number, containerH: number) => {
+      const containerAspect = containerW / containerH
       let planeWidth, planeHeight
+      
+      // Scaling foto disesuaikan agar selalu terpusat & tidak terlalu besar di HP
       if (imgAspect > containerAspect) {
-        planeWidth = width
-        planeHeight = width / imgAspect
+        planeHeight = containerH
+        planeWidth = containerH * imgAspect
       } else {
-        planeHeight = height
-        planeWidth = height * imgAspect
+        planeWidth = containerW
+        planeHeight = containerW / imgAspect
       }
+
       baseImage.geometry.dispose()
       baseImage.geometry = new THREE.PlaneGeometry(planeWidth, planeHeight)
       helmetImage.geometry.dispose()
       helmetImage.geometry = new THREE.PlaneGeometry(planeWidth, planeHeight)
+    }
+
+    const baseTexture = textureLoader.load("/images/hero-off.png", (texture) => {
+      const img = texture.image
+      updatePlaneGeometries(img.width / img.height, width, height)
     })
 
     const helmetTexture = textureLoader.load("/images/hero-on.png")
@@ -309,22 +341,7 @@ export default function InteractivePortrait() {
       renderer.setSize(newWidth, newHeight)
       gu.aspect.value = newWidth / newHeight
       if (baseTexture.image) {
-        const img = baseTexture.image
-        const imgAspect = img.width / img.height
-        const containerAspect = newWidth / newHeight
-        let planeWidth, planeHeight
-        if (imgAspect > containerAspect) {
-          planeWidth = newWidth
-          planeHeight = newWidth / imgAspect
-        } else {
-          planeHeight = newHeight
-          planeWidth = newHeight * imgAspect
-        }
-        baseImage.geometry.dispose()
-        baseImage.geometry = new THREE.PlaneGeometry(planeWidth, planeHeight)
-        helmetImage.geometry.dispose()
-        helmetImage.geometry = new THREE.PlaneGeometry(planeWidth, planeHeight)
-
+        updatePlaneGeometries(baseTexture.image.width / baseTexture.image.height, newWidth, newHeight)
         bgPlane.geometry.dispose()
         bgPlane.geometry = new THREE.PlaneGeometry(newWidth, newHeight)
       }
@@ -358,36 +375,35 @@ export default function InteractivePortrait() {
   }, [])
 
   return (
-    <div className="fixed inset-0 w-full h-full overflow-hidden">
-      {/* --- LAYER 0: MARQUEE RIBBONS (HANYA LOGO GAMBAR DI BELAKANG FOTO) --- */}
+    <div className="relative w-full h-[100dvh] min-h-[550px] overflow-hidden select-none">
+      {/* --- LAYER 0: MARQUEE RIBBONS (Responsif HP) --- */}
       <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none flex items-center justify-center z-0">
-        {/* Background Vignette */}
         <div className="absolute inset-0 pointer-events-none" />
 
-        {/* --- RIBBON 1: Client Logos (Ukuran Diperbesar) --- */}
-        <div className="absolute top-[32%] left-[-10%] w-[120%] rotate-[-8deg] bg-[#a3e635] py-5 shadow-2xl overflow-hidden border-y-2 border-black">
+        {/* RIBBON 1: Client Logos */}
+        <div className="absolute top-[28%] md:top-[32%] left-[-15%] w-[130%] rotate-[-6deg] md:rotate-[-8deg] bg-[#a3e635] py-2 md:py-5 shadow-2xl overflow-hidden border-y border-black">
           <div className="flex whitespace-nowrap animate-marquee items-center">
             {[...clientList, ...clientList, ...clientList].map((src, index) => (
-              <div key={index} className="flex items-center mx-10">
+              <div key={index} className="flex items-center mx-4 md:mx-10">
                 <img 
                   src={src} 
                   alt="Client Logo" 
-                  className="h-12 md:h-16 w-auto object-contain filter contrast-200" 
+                  className="h-7 md:h-16 w-auto object-contain filter contrast-200" 
                 />
               </div>
             ))}
           </div>
         </div>
 
-        {/* --- RIBBON 2: Tech Stack Logos (Ukuran Diperbesar) --- */}
-        <div className="absolute top-[52%] left-[-10%] w-[120%] rotate-[8deg] bg-[#111111] py-5 shadow-2xl overflow-hidden border-y-2 border-[#a3e635]">
+        {/* RIBBON 2: Tech Stack Logos */}
+        <div className="absolute top-[55%] md:top-[52%] left-[-15%] w-[130%] rotate-[6deg] md:rotate-[8deg] bg-[#111111] py-2 md:py-5 shadow-2xl overflow-hidden border-y border-[#a3e635]">
           <div className="flex whitespace-nowrap animate-marquee-reverse items-center">
             {[...techList, ...techList, ...techList].map((src, index) => (
-              <div key={index} className="flex items-center mx-10">
+              <div key={index} className="flex items-center mx-4 md:mx-10">
                 <img 
                   src={src} 
                   alt="Tech Logo" 
-                  className="h-12 md:h-16 w-auto object-contain" 
+                  className="h-7 md:h-16 w-auto object-contain" 
                 />
               </div>
             ))}
@@ -398,21 +414,20 @@ export default function InteractivePortrait() {
       {/* --- LAYER 1: THREE.JS INTERACTIVE PORTRAIT --- */}
       <div
         ref={containerRef}
-        className="absolute inset-0 w-full h-full cursor-crosshair z-10"
-        style={{ touchAction: "none" }}
+        className="absolute inset-0 w-full h-full cursor-crosshair z-10 touch-pan-y"
       >
-        {/* Floating Text Labels */}
-        <div className="absolute bottom-6 left-6 z-20 pointer-events-none">
+        {/* Floating Text Labels (Responsif HP ala Lando Norris UI) */}
+        <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 z-20 pointer-events-none">
           <span 
-            className="text-3xl md:text-7xl font-black uppercase tracking-tight text-[#282c20]"
+            className="text-2xl xs:text-3xl sm:text-5xl md:text-7xl font-black uppercase tracking-tight text-[#282c20]"
             style={{ WebkitTextStroke: "1px white" }}
           >
             Software
           </span>
         </div>
-        <div className="absolute bottom-6 right-6 z-20 pointer-events-none">
+        <div className="absolute bottom-4 right-4 sm:bottom-6 sm:right-6 z-20 pointer-events-none">
           <span 
-            className="text-3xl md:text-7xl font-black uppercase tracking-tight text-[#282c20]"
+            className="text-2xl xs:text-3xl sm:text-5xl md:text-7xl font-black uppercase tracking-tight text-[#282c20]"
             style={{ WebkitTextStroke: "1px white" }}
           >
             Engineer
