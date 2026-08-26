@@ -1,10 +1,10 @@
 import GallerySection from "@/components/gallery-section"
-import ScrollCollageSection from "@/components/scroll-collage-section"
-import StoreSection from "@/components/store-section"
-import PartnersSection from "@/components/partners-section"
+// import ScrollCollageSection from "@/components/scroll-collage-section"
+// import StoreSection from "@/components/store-section"
+// import PartnersSection from "@/components/partners-section"
 import TrackSplitSection from "@/components/track-split-section"
-import TestimonialSection from "@/components/testimonial-section"
-import HelmetHall from "@/components/helmet-hall-bk"
+// import TestimonialSection from "@/components/testimonial-section"
+// import HelmetHall from "@/components/helmet-hall-bk"
 
 import Link from "next/link"
 
@@ -36,53 +36,11 @@ export default function ComponentsArchivePage() {
           </div>
         </div>
 
-        {/* Scroll Collage Section */}
-        <div className="border-t border-white/10 pt-12">
-          <h2 className="text-2xl font-mono text-center mb-8 text-gray-500">2. Scroll Collage Section (Unused)</h2>
-          <div className="relative isolate">
-            <ScrollCollageSection />
-          </div>
-        </div>
-
-        {/* Store Section */}
-        <div className="border-t border-white/10 pt-12">
-          <h2 className="text-2xl font-mono text-center mb-8 text-gray-500">3. Store Section (Unused)</h2>
-          <div className="relative isolate">
-            <StoreSection />
-          </div>
-        </div>
-
-        {/* Partners Section */}
-        <div className="border-t border-white/10 pt-12">
-          <h2 className="text-2xl font-mono text-center mb-8 text-gray-500">4. Partners Section (Unused)</h2>
-          <div className="relative isolate">
-            <PartnersSection />
-          </div>
-        </div>
-
         {/* Track Split Section */}
         <div className="border-t border-white/10 pt-12">
           <h2 className="text-2xl font-mono text-center mb-8 text-gray-500">5. Track Split Section (Unused)</h2>
           <div className="relative isolate">
             <TrackSplitSection />
-          </div>
-        </div>
-
-        {/* Helmet Hall Section */}
-        <div className="border-t border-white/10 pt-12">
-          <h2 className="text-2xl font-mono text-center mb-8 text-gray-500">5. Track Split Section (Unused)</h2>
-          <div className="relative isolate">
-            <HelmetHall />
-          </div>
-        </div>
-
-        {/* Testimonial Section (Old Version) */}
-        <div className="border-t border-white/10 pt-12">
-          <h2 className="text-2xl font-mono text-center mb-8 text-gray-500">
-            6. Testimonial Section (Superseded by BikeShowcase)
-          </h2>
-          <div className="relative isolate">
-            <TestimonialSection />
           </div>
         </div>
       </div>
