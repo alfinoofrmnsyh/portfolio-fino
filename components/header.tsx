@@ -26,6 +26,16 @@ export default function Header() {
     }
   }, [menuOpen])
 
+  // Navigasi disesuaikan dengan section di app/page.tsx
+  const navItems = [
+    { name: "HOME", href: "#home" },
+    { name: "ABOUT ME", href: "#aboutme" },
+    { name: "JOURNEY", href: "#journey" },
+    { name: "MOTTO", href: "#motto" },
+    { name: "PROJECT", href: "#project" },
+    { name: "CONTACT", href: "#contact" },
+  ]
+
   return (
     <>
       <motion.header
@@ -91,43 +101,24 @@ export default function Header() {
               onClick={(e) => e.stopPropagation()}
             >
               <motion.ul className="space-y-4 sm:space-y-6 text-3xl xs:text-4xl sm:text-5xl md:text-6xl font-black uppercase text-white">
-                {["HOME", "MISSION", "GALLERY", "HELMETS", "STORE", "CONTACT"].map((item) => (
+                {navItems.map((item) => (
                   <motion.li
-                    key={item}
+                    key={item.name}
                     variants={{
                       open: { opacity: 1, y: 0, rotate: 0 },
                       closed: { opacity: 0, y: 20, rotate: -5 },
                     }}
                   >
                     <a
-                      href={`#${item.toLowerCase()}`}
+                      href={item.href}
                       className="inline-block hover:text-fino-accent transition-colors duration-300 hover:scale-105 transform active:scale-95"
                       onClick={() => setMenuOpen(false)}
                     >
-                      {item}
+                      {item.name}
                     </a>
                   </motion.li>
                 ))}
               </motion.ul>
-
-              <motion.div
-                variants={{
-                  open: { opacity: 1, y: 0 },
-                  closed: { opacity: 0, y: 20 },
-                }}
-                className="mt-8 sm:mt-12 flex justify-center gap-4 sm:gap-6"
-              >
-                {["INSTAGRAM", "TIKTOK", "YOUTUBE"].map((social) => (
-                  <motion.a
-                    key={social}
-                    whileHover={{ scale: 1.1, color: "#c8f550" }}
-                    href="#"
-                    className="text-xs sm:text-sm font-bold text-white/60 hover:text-fino-accent transition-colors"
-                  >
-                    {social}
-                  </motion.a>
-                ))}
-              </motion.div>
             </motion.nav>
           </motion.div>
         )}

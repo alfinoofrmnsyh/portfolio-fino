@@ -138,7 +138,7 @@ export default function SocialSection() {
   const centerIndex = (projectCards.length - 1) / 2
 
   return (
-    <section id="social-section" className="relative bg-[#111111] text-white py-16 px-4 md:px-12 overflow-hidden">
+    <section id="project" className="relative bg-[#111111] text-white py-16 px-4 md:px-12 overflow-hidden">
       <div className="max-w-7xl mx-auto mb-20">
         
         {/* Animated Hand Icon */}

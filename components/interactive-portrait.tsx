@@ -6,6 +6,139 @@ import * as THREE from "three"
 const clientList = Array.from({ length: 8 }, (_, i) => `/images/icon/${i + 27}.png`)
 const techList = Array.from({ length: 20 }, (_, i) => `/images/icon/${i + 7}.png`)
 
+const waterSimVertexShader = `
+  varying vec2 vUv;
+  void main() {
+    vUv = uv;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`
+
+const waterSimFragmentShader = `
+  uniform sampler2D textureA;
+  uniform vec2 mouse;
+  uniform vec2 resolution;
+  uniform float time;
+  uniform int frame;
+  varying vec2 vUv;
+
+  const float delta = 1.4;
+
+  void main() {
+    vec2 uv = vUv;
+    if (frame == 0) {
+      gl_FragColor = vec4(0.0);
+      return;
+    }
+
+    vec4 data = texture2D(textureA, uv);
+    float pressure = data.x;
+    float pVel = data.y;
+
+    vec2 texelSize = 1.0 / resolution;
+    float p_right = texture2D(textureA, uv + vec2(texelSize.x, 0.0)).x;
+    float p_left  = texture2D(textureA, uv + vec2(-texelSize.x, 0.0)).x;
+    float p_up    = texture2D(textureA, uv + vec2(0.0, texelSize.y)).x;
+    float p_down  = texture2D(textureA, uv + vec2(0.0, -texelSize.y)).x;
+
+    if (uv.x <= texelSize.x) p_left = p_right;
+    if (uv.x >= 1.0 - texelSize.x) p_right = p_left;
+    if (uv.y <= texelSize.y) p_down = p_up;
+    if (uv.y >= 1.0 - texelSize.y) p_up = p_down;
+
+    pVel += delta * (-2.0 * pressure + p_right + p_left) / 4.0;
+    pVel += delta * (-2.0 * pressure + p_up + p_down) / 4.0;
+
+    pressure += delta * pVel;
+
+    pVel -= 0.005 * delta * pressure;
+    pVel *= 1.0 - 0.002 * delta;
+    pressure *= 0.985;
+
+    vec2 mouseUV = mouse / resolution;
+    if (mouse.x > 0.0) {
+      float dist = distance(uv, mouseUV);
+      if (dist <= 0.025) {
+        pressure += 0.8 * (1.0 - dist / 0.025);
+      }
+    }
+
+    gl_FragColor = vec4(
+      pressure,
+      pVel,
+      (p_right - p_left) / 2.0,
+      (p_up - p_down) / 2.0
+    );
+  }
+`
+
+class WaterSimulation {
+  private simScene = new THREE.Scene()
+  private simCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1)
+  private material: THREE.ShaderMaterial
+  private rtA: THREE.WebGLRenderTarget
+  private rtB: THREE.WebGLRenderTarget
+  private frame = 0
+  mouse = new THREE.Vector2(-1, -1)
+
+  constructor(width: number, height: number) {
+    const options = {
+      format: THREE.RGBAFormat,
+      type: THREE.FloatType,
+      minFilter: THREE.LinearFilter,
+      magFilter: THREE.LinearFilter,
+      stencilBuffer: false,
+      depthBuffer: false,
+    }
+    this.rtA = new THREE.WebGLRenderTarget(width, height, options)
+    this.rtB = new THREE.WebGLRenderTarget(width, height, options)
+
+    this.material = new THREE.ShaderMaterial({
+      uniforms: {
+        textureA: { value: null },
+        mouse: { value: this.mouse },
+        resolution: { value: new THREE.Vector2(width, height) },
+        time: { value: 0 },
+        frame: { value: 0 },
+      },
+      vertexShader: waterSimVertexShader,
+      fragmentShader: waterSimFragmentShader,
+    })
+
+    this.simScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.material))
+  }
+
+  setSize(width: number, height: number) {
+    this.rtA.setSize(width, height)
+    this.rtB.setSize(width, height)
+    this.material.uniforms.resolution.value.set(width, height)
+  }
+
+  step(renderer: THREE.WebGLRenderer, dt: number) {
+    this.material.uniforms.frame.value = this.frame++
+    this.material.uniforms.time.value += dt
+    this.material.uniforms.textureA.value = this.rtA.texture
+
+    renderer.setRenderTarget(this.rtB)
+    renderer.render(this.simScene, this.simCamera)
+    renderer.setRenderTarget(null)
+
+    const tmp = this.rtA
+    this.rtA = this.rtB
+    this.rtB = tmp
+  }
+
+  get texture() {
+    return this.rtA.texture
+  }
+
+  dispose() {
+    this.rtA.dispose()
+    this.rtB.dispose()
+    this.material.dispose()
+  }
+}
+
 export default function InteractivePortrait() {
   const containerRef = useRef<HTMLDivElement>(null)
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null)
@@ -31,9 +164,51 @@ export default function InteractivePortrait() {
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
     renderer.setSize(width, height)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-    renderer.setClearColor(0x000000, 0)
     container.appendChild(renderer.domElement)
     rendererRef.current = renderer
+
+    const waterSim = new WaterSimulation(width, height)
+    const texWaterUniform: { value: THREE.Texture | null } = { value: null }
+
+    // --- MESH & MATERIAL HELPER UNTUK EFEK AIR GLOBAL ---
+    const applyWaterDistortion = (shader: THREE.Shader) => {
+      shader.uniforms.texWater = texWaterUniform
+      let vertexShader = shader.vertexShader
+
+      vertexShader = vertexShader.replace(
+        "void main() {",
+        "varying vec2 vWaterUv;\nvoid main() {",
+      )
+      vertexShader = vertexShader.replace(
+        "#include <project_vertex>",
+        "#include <project_vertex>\nvWaterUv = uv;",
+      )
+      shader.vertexShader = vertexShader
+
+      let fragmentShader = `
+        uniform sampler2D texWater;
+        varying vec2 vWaterUv;
+        ${shader.fragmentShader}
+      `
+
+      fragmentShader = fragmentShader.replace(
+        `#include <map_fragment>`,
+        `
+        vec4 waterData = texture2D(texWater, vWaterUv);
+        vec2 waterDistortion = 0.015 * waterData.zw;
+        vec4 sampledDiffuse = texture2D(map, vWaterUv + waterDistortion);
+        diffuseColor *= sampledDiffuse;
+
+        // Kilau air specular
+        vec3 waterNormal = normalize(vec3(-waterData.z * 2.0, 0.6, -waterData.w * 2.0));
+        vec3 waterLightDir = normalize(vec3(-0.3, 1.0, 0.4));
+        float waterSpecular = pow(max(0.0, dot(waterNormal, waterLightDir)), 60.0) * 0.8;
+        diffuseColor.rgb += waterSpecular;
+        `,
+      )
+
+      shader.fragmentShader = fragmentShader
+    }
 
     class Blob {
       renderer: THREE.WebGLRenderer
@@ -63,6 +238,9 @@ export default function InteractivePortrait() {
           const rect = container.getBoundingClientRect()
           this.uniforms.pointer.value.x = ((clientX - rect.left) / width) * 2 - 1
           this.uniforms.pointer.value.y = -((clientY - rect.top) / height) * 2 + 1
+
+          waterSim.mouse.x = clientX - rect.left
+          waterSim.mouse.y = height - (clientY - rect.top)
         }
 
         const handleMouseMove = (event: MouseEvent) => {
@@ -71,46 +249,11 @@ export default function InteractivePortrait() {
 
         const handleMouseLeave = () => {
           this.uniforms.pointer.value.setScalar(10)
-        }
-
-        // Variable untuk membedakan Scroll vs Interactive Blob pada Mobile
-        let touchStartX = 0
-        let touchStartY = 0
-        let isVerticalScrolling = false
-
-        const handleTouchStart = (event: TouchEvent) => {
-          if (event.touches.length > 0) {
-            touchStartX = event.touches[0].clientX
-            touchStartY = event.touches[0].clientY
-            isVerticalScrolling = false
-          }
-        }
-
-        const handleTouchMove = (event: TouchEvent) => {
-          if (event.touches.length > 0) {
-            const currentX = event.touches[0].clientX
-            const currentY = event.touches[0].clientY
-            const diffX = Math.abs(currentX - touchStartX)
-            const diffY = Math.abs(currentY - touchStartY)
-
-            // Jika pergeseran dominan Vertikal (> 8px), batalkan trigger blob agar user bisa scroll
-            if (diffY > diffX && diffY > 8) {
-              isVerticalScrolling = true
-              handleMouseLeave()
-              return
-            }
-
-            if (!isVerticalScrolling) {
-              handlePointerMove(currentX, currentY)
-            }
-          }
+          waterSim.mouse.set(-1, -1)
         }
 
         container.addEventListener("mousemove", handleMouseMove)
         container.addEventListener("mouseleave", handleMouseLeave)
-        container.addEventListener("touchstart", handleTouchStart, { passive: true })
-        container.addEventListener("touchmove", handleTouchMove, { passive: true })
-        container.addEventListener("touchend", handleMouseLeave)
 
         this.rtScene = new THREE.Mesh(
           new THREE.PlaneGeometry(2, 2),
@@ -177,13 +320,13 @@ export default function InteractivePortrait() {
     }
 
     const blob = new Blob(renderer)
-
     const textureLoader = new THREE.TextureLoader()
+
+    // --- SETUP IMAGES HERO ---
     const updatePlaneGeometries = (imgAspect: number, containerW: number, containerH: number) => {
       const containerAspect = containerW / containerH
       let planeWidth, planeHeight
-      
-      // Scaling foto disesuaikan agar selalu terpusat & tidak terlalu besar di HP
+
       if (imgAspect > containerAspect) {
         planeHeight = containerH
         planeWidth = containerH * imgAspect
@@ -192,111 +335,64 @@ export default function InteractivePortrait() {
         planeHeight = containerW / imgAspect
       }
 
+      const scaleFactor = 0.75
+      planeWidth *= scaleFactor
+      planeHeight *= scaleFactor
+
       baseImage.geometry.dispose()
       baseImage.geometry = new THREE.PlaneGeometry(planeWidth, planeHeight)
       helmetImage.geometry.dispose()
       helmetImage.geometry = new THREE.PlaneGeometry(planeWidth, planeHeight)
+
+      const yPos = containerW < 768 ? -(containerH - planeHeight) / 2 : 0
+      baseImage.position.y = yPos
+      helmetImage.position.y = yPos
     }
 
     const baseTexture = textureLoader.load("/images/hero-off.png", (texture) => {
-      const img = texture.image
-      updatePlaneGeometries(img.width / img.height, width, height)
+      if (texture?.image) {
+        updatePlaneGeometries(texture.image.width / texture.image.height, width, height)
+      }
     })
 
     const helmetTexture = textureLoader.load("/images/hero-on.png")
-
     baseTexture.colorSpace = THREE.SRGBColorSpace
     helmetTexture.colorSpace = THREE.SRGBColorSpace
 
-    const baseImageMaterial = new THREE.MeshBasicMaterial({ map: baseTexture, transparent: true, alphaTest: 0.0 })
+    // Base Image Material (dengan efek air)
+    const baseImageMaterial = new THREE.MeshBasicMaterial({
+      map: baseTexture,
+      transparent: true,
+      onBeforeCompile: applyWaterDistortion,
+    })
     const baseImage = new THREE.Mesh(new THREE.PlaneGeometry(width, height), baseImageMaterial)
+    baseImage.position.z = 0.1
     scene.add(baseImage)
 
-    const bgPlaneMaterial = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true })
-    bgPlaneMaterial.defines = { USE_UV: "" }
-
-    bgPlaneMaterial.onBeforeCompile = (shader) => {
-      shader.uniforms.texBlob = { value: blob.rtOutput.texture }
-      shader.uniforms.time = gu.time
-
-      let vertexShader = shader.vertexShader
-      vertexShader = vertexShader.replace("void main() {", "varying vec4 vPosProj;\nvoid main() {")
-      vertexShader = vertexShader.replace(
-        "#include <project_vertex>",
-        "#include <project_vertex>\nvPosProj = gl_Position;",
-      )
-      shader.vertexShader = vertexShader
-
-      shader.fragmentShader = `
-        uniform sampler2D texBlob; 
-        uniform float time; 
-        varying vec4 vPosProj;
-
-        float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453123);}
-        float noise(vec2 p){vec2 i=floor(p);vec2 f=fract(p);f=f*f*(3.-2.*f);float a=hash(i);float b=hash(i+vec2(1.,0.));float c=hash(i+vec2(0.,1.));float d=hash(i+vec2(1.,1.));return mix(mix(a,b,f.x),mix(c,d,f.x),f.y);}
-        
-        float fbm(vec2 p) {
-            float value = 0.0;
-            float amplitude = 0.5;
-            for (int i = 0; i < 4; i++) {
-                value += amplitude * noise(p);
-                p *= 2.1;
-                amplitude *= 0.3;
-            }
-            return value;
-        }
-
-        ${shader.fragmentShader}
-      `.replace(
-        `#include <clipping_planes_fragment>`,
-        `
-        vec2 blobUV=((vPosProj.xy/vPosProj.w)+1.)*0.5;
-        vec4 blobData=texture(texBlob,blobUV);
-        if(blobData.r<0.02)discard;
-
-        vec3 colorBg = vec3(0.0);
-        vec3 colorSoftShape = vec3(0.06);
-        vec3 colorLine = vec3(0.15);
-
-        vec2 uv = vUv * 3.5;
-        vec2 distortionField = vUv * 2.0;
-        float distortion = fbm(distortionField + time * 0.2); 
-
-        float distortionStrength = 0.7; 
-        vec2 warpedUv = uv + (distortion - 0.5) * distortionStrength;
-        
-        float n = fbm(warpedUv);
-
-        float softShapeMix = smoothstep(0.1, 0.9, sin(n * 3.0));
-        vec3 baseColor = mix(colorBg, colorSoftShape, softShapeMix);
-        float linePattern = fract(n * 15.0);
-        float lineMix = 1.0 - smoothstep(0.49, 0.51, linePattern);
-        vec3 finalColor = mix(baseColor, colorLine, lineMix);
-
-        diffuseColor.rgb = finalColor;
-        #include <clipping_planes_fragment>
-        `,
-      )
-    }
-
-    const bgPlane = new THREE.Mesh(new THREE.PlaneGeometry(width, height), bgPlaneMaterial)
-    scene.add(bgPlane)
-
-    const helmetImageMaterial = new THREE.MeshBasicMaterial({ map: helmetTexture, transparent: true, alphaTest: 0.0 })
-
+    // Helmet Image Material (dengan efek air + reveal blob)
+    const helmetImageMaterial = new THREE.MeshBasicMaterial({ map: helmetTexture, transparent: true })
     helmetImageMaterial.onBeforeCompile = (shader) => {
       shader.uniforms.texBlob = { value: blob.rtOutput.texture }
+      shader.uniforms.texWater = texWaterUniform
       let vertexShader = shader.vertexShader
-      vertexShader = vertexShader.replace("void main() {", "varying vec4 vPosProj;\nvoid main() {")
+
+      vertexShader = vertexShader.replace(
+        "void main() {",
+        "varying vec4 vPosProj;\nvarying vec2 vWaterUv;\nvoid main() {",
+      )
       vertexShader = vertexShader.replace(
         "#include <project_vertex>",
-        "#include <project_vertex>\nvPosProj = gl_Position;",
+        "#include <project_vertex>\nvPosProj = gl_Position;\nvWaterUv = uv;",
       )
       shader.vertexShader = vertexShader
-      shader.fragmentShader = `
-        uniform sampler2D texBlob; varying vec4 vPosProj;
+
+      let fragmentShader = `
+        uniform sampler2D texBlob; uniform sampler2D texWater;
+        varying vec4 vPosProj; varying vec2 vWaterUv;
         ${shader.fragmentShader}
-      `.replace(
+      `
+
+      fragmentShader = fragmentShader.replace(
         `#include <clipping_planes_fragment>`,
         `
         vec2 blobUV=((vPosProj.xy/vPosProj.w)+1.)*0.5;
@@ -305,24 +401,46 @@ export default function InteractivePortrait() {
         #include <clipping_planes_fragment>
         `,
       )
+
+      fragmentShader = fragmentShader.replace(
+        `#include <map_fragment>`,
+        `
+        vec4 waterData = texture2D(texWater, vWaterUv);
+        vec2 waterDistortion = 0.012 * waterData.zw;
+        vec4 sampledDiffuse = texture2D(map, vWaterUv + waterDistortion);
+        diffuseColor *= sampledDiffuse;
+
+        vec3 waterNormal = normalize(vec3(-waterData.z * 2.0, 0.6, -waterData.w * 2.0));
+        vec3 waterLightDir = normalize(vec3(-0.3, 1.0, 0.4));
+        float waterSpecular = pow(max(0.0, dot(waterNormal, waterLightDir)), 60.0) * 1.0;
+        diffuseColor.rgb += waterSpecular;
+        `,
+      )
+
+      shader.fragmentShader = fragmentShader
     }
 
     const helmetImage = new THREE.Mesh(new THREE.PlaneGeometry(width, height), helmetImageMaterial)
+    helmetImage.position.z = 0.2
     scene.add(helmetImage)
 
-    baseImage.position.z = 0.0
-    bgPlane.position.z = 0.05
-    helmetImage.position.z = 0.1
-
-    const clock = new THREE.Clock()
+    // --- ANIMATION LOOP ---
+    let lastTime = performance.now()
     let t = 0
 
     const animate = () => {
-      const dt = clock.getDelta()
+      const now = performance.now()
+      const dt = Math.min((now - lastTime) / 1000, 0.1)
+      lastTime = now
+
       t += dt
       gu.time.value = t
       gu.dTime.value = dt
+
       blob.render()
+      waterSim.step(renderer, dt)
+      texWaterUniform.value = waterSim.texture
+
       renderer.render(scene, camera)
       animationFrameRef.current = requestAnimationFrame(animate)
     }
@@ -340,10 +458,9 @@ export default function InteractivePortrait() {
       camera.updateProjectionMatrix()
       renderer.setSize(newWidth, newHeight)
       gu.aspect.value = newWidth / newHeight
+      waterSim.setSize(newWidth, newHeight)
       if (baseTexture.image) {
         updatePlaneGeometries(baseTexture.image.width / baseTexture.image.height, newWidth, newHeight)
-        bgPlane.geometry.dispose()
-        bgPlane.geometry = new THREE.PlaneGeometry(newWidth, newHeight)
       }
     }
 
@@ -352,7 +469,7 @@ export default function InteractivePortrait() {
     return () => {
       window.removeEventListener("resize", handleResize)
       if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current)
-      if (rendererRef.current && container) {
+      if (rendererRef.current && container.contains(rendererRef.current.domElement)) {
         container.removeChild(rendererRef.current.domElement)
         rendererRef.current.dispose()
       }
@@ -371,39 +488,36 @@ export default function InteractivePortrait() {
       baseTexture.dispose()
       helmetTexture.dispose()
       blob.rtOutput.dispose()
+      waterSim.dispose()
     }
   }, [])
 
   return (
     <div className="relative w-full h-[100dvh] min-h-[550px] overflow-hidden select-none">
-      {/* --- LAYER 0: MARQUEE RIBBONS (Responsif HP) --- */}
+      {/* --- LAYER 0: MARQUEE RIBBONS --- */}
       <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none flex items-center justify-center z-0">
-        <div className="absolute inset-0 pointer-events-none" />
-
-        {/* RIBBON 1: Client Logos */}
         <div className="absolute top-[28%] md:top-[32%] left-[-15%] w-[130%] rotate-[-6deg] md:rotate-[-8deg] bg-[#a3e635] py-2 md:py-5 shadow-2xl overflow-hidden border-y border-black">
           <div className="flex whitespace-nowrap animate-marquee items-center">
             {[...clientList, ...clientList, ...clientList].map((src, index) => (
               <div key={index} className="flex items-center mx-4 md:mx-10">
-                <img 
-                  src={src} 
-                  alt="Client Logo" 
-                  className="h-7 md:h-16 w-auto object-contain filter contrast-200" 
+                <img
+                  src={src}
+                  alt="Client Logo"
+                  className="h-7 md:h-16 w-auto object-contain filter contrast-200"
                 />
               </div>
             ))}
           </div>
         </div>
 
-        {/* RIBBON 2: Tech Stack Logos */}
         <div className="absolute top-[55%] md:top-[52%] left-[-15%] w-[130%] rotate-[6deg] md:rotate-[8deg] bg-[#111111] py-2 md:py-5 shadow-2xl overflow-hidden border-y border-[#a3e635]">
           <div className="flex whitespace-nowrap animate-marquee-reverse items-center">
             {[...techList, ...techList, ...techList].map((src, index) => (
               <div key={index} className="flex items-center mx-4 md:mx-10">
-                <img 
-                  src={src} 
-                  alt="Tech Logo" 
-                  className="h-7 md:h-16 w-auto object-contain" 
+                <img
+                  src={src}
+                  alt="Tech Logo"
+                  className="h-7 md:h-16 w-auto object-contain"
                 />
               </div>
             ))}
@@ -411,14 +525,13 @@ export default function InteractivePortrait() {
         </div>
       </div>
 
-      {/* --- LAYER 1: THREE.JS INTERACTIVE PORTRAIT --- */}
+      {/* --- LAYER 1: THREE.JS CANVAS --- */}
       <div
         ref={containerRef}
         className="absolute inset-0 w-full h-full cursor-crosshair z-10 touch-pan-y"
       >
-        {/* Floating Text Labels (Responsif HP ala Lando Norris UI) */}
         <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 z-20 pointer-events-none">
-          <span 
+          <span
             className="text-2xl xs:text-3xl sm:text-5xl md:text-7xl font-black uppercase tracking-tight text-[#282c20]"
             style={{ WebkitTextStroke: "1px white" }}
           >
@@ -426,7 +539,7 @@ export default function InteractivePortrait() {
           </span>
         </div>
         <div className="absolute bottom-4 right-4 sm:bottom-6 sm:right-6 z-20 pointer-events-none">
-          <span 
+          <span
             className="text-2xl xs:text-3xl sm:text-5xl md:text-7xl font-black uppercase tracking-tight text-[#282c20]"
             style={{ WebkitTextStroke: "1px white" }}
           >

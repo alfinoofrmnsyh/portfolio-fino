@@ -39,7 +39,7 @@ export default function HeroSection() {
   const missionOpacity = useTransform(smoothProgress, [0.45, 0.65], [0, 1])
 
   return (
-    <section ref={containerRef} className="relative h-[180vh]">
+    <section id="home" ref={containerRef} className="relative h-[180vh]">
       <div className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center">
         
         {/* Background Text Layer */}

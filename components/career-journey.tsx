@@ -1,7 +1,7 @@
 "use client"
 
 import { useRef } from "react"
-import { motion, useScroll, useTransform } from "framer-motion"
+import { motion, useScroll, useTransform, MotionValue } from "framer-motion"
 
 const careerData = [
   {
@@ -103,8 +103,115 @@ const careerData = [
 ]
 
 const sizeMap: Record<string, string> = {
-  xl: "text-3xl sm:text-4xl md:text-5xl",
-  sm: "text-2xl sm:text-3xl md:text-4xl",
+  xl: "text-2xl sm:text-4xl md:text-5xl",
+  sm: "text-xl sm:text-3xl md:text-4xl",
+}
+
+function CareerCard({
+  item,
+  index,
+  totalItems,
+  scrollYProgress,
+}: {
+  item: (typeof careerData)[0]
+  index: number
+  totalItems: number
+  scrollYProgress: MotionValue<number>
+}) {
+  const triggerPoint = index / (totalItems - 1)
+  const activeStart = Math.max(0, triggerPoint - 0.08)
+  const activePeak = triggerPoint
+  const activeEnd = Math.min(1, triggerPoint + 0.12)
+
+  const filterGrayscale = useTransform(
+    scrollYProgress,
+    [activeStart, activePeak, activeEnd],
+    ["grayscale(100%)", "grayscale(0%)", "grayscale(0%)"]
+  )
+
+  const imageOpacity = useTransform(
+    scrollYProgress,
+    [activeStart, activePeak, activeEnd],
+    [0.4, 1, 1]
+  )
+
+  const imageScale = useTransform(
+    scrollYProgress,
+    [activeStart, activePeak, activeEnd],
+    [0.96, 1.05, 1.01]
+  )
+
+  const glowFilter = useTransform(
+    scrollYProgress,
+    [activeStart, activePeak, activeEnd],
+    [
+      "drop-shadow(0 0 0px rgba(163,230,53,0))",
+      "drop-shadow(0 0 18px rgba(163,230,53,0.75))",
+      "drop-shadow(0 0 8px rgba(163,230,53,0.25))",
+    ]
+  )
+
+  return (
+    <div
+      className={`group relative flex flex-col ${item.align} w-[78vw] sm:w-[420px] md:w-[500px] shrink-0 ${item.offset}`}
+    >
+      <span className="pointer-events-none select-none font-mono text-[14vw] sm:text-8xl md:text-9xl font-black text-white/[0.04] absolute -top-8 sm:-top-12 md:-top-16 left-0 leading-none -z-10">
+        {item.id}
+      </span>
+
+      <span className="font-mono text-[9px] sm:text-[10px] md:text-xs tracking-[0.2em] text-[#a3e635] uppercase">
+        {item.period}
+      </span>
+
+      <h4
+        className={`${sizeMap[item.size]} font-black uppercase tracking-tight leading-[0.95] text-white mt-1 mb-2 sm:mb-3`}
+      >
+        {item.company}
+      </h4>
+
+      {/* Gambar dengan Responsif Height */}
+      <div className={`flex items-center gap-3 ${item.align === "text-right" ? "justify-end" : ""}`}>
+        <motion.img
+          src={item.image || "/placeholder.svg"}
+          alt={item.company}
+          style={{
+            filter: filterGrayscale,
+            opacity: imageOpacity,
+            scale: imageScale,
+            dropShadow: glowFilter,
+          }}
+          className="h-36 sm:h-52 md:h-64 w-auto object-contain transition-all duration-300 group-hover:!grayscale-0 group-hover:!opacity-100 group-hover:!scale-105"
+        />
+      </div>
+
+      <span className="font-mono text-[9px] sm:text-[10px] md:text-xs uppercase tracking-widest text-white/50 mt-3 sm:mt-5">
+        {item.role}
+      </span>
+
+      <p
+        className={`italic font-serif text-white/70 leading-relaxed mt-3 sm:mt-5 ${
+          item.size === "xl" ? "text-sm sm:text-lg md:text-xl max-w-[90%]" : "text-xs sm:text-sm md:text-base max-w-[95%]"
+        } ${item.align === "text-right" ? "ml-auto" : ""}`}
+      >
+        {item.quote}
+      </p>
+
+      <div
+        className={`mt-3 sm:mt-4 font-mono text-[9px] sm:text-[10px] uppercase tracking-widest text-white/35 ${
+          item.align === "text-right" ? "text-right" : ""
+        }`}
+      >
+        {item.tags.map((tag, i) => (
+          <span key={tag}>
+            <span className="group-hover:text-[#a3e635] transition-colors">{tag}</span>
+            {i < item.tags.length - 1 && <span className="mx-1.5 sm:mx-2 text-white/15">·</span>}
+          </span>
+        ))}
+      </div>
+
+      <div className={`mt-4 sm:mt-6 h-px w-12 sm:w-16 bg-[#a3e635]/30 ${item.align === "text-right" ? "ml-auto" : ""}`} />
+    </div>
+  )
 }
 
 export default function CareerJourney() {
@@ -115,96 +222,133 @@ export default function CareerJourney() {
     offset: ["start start", "end end"],
   })
 
-  const x = useTransform(scrollYProgress, [0, 1], ["0%", "-72%"])
+  // Mengatur pergeseran track horizontal yang halus di desktop & HP
+  const x = useTransform(scrollYProgress, [0, 1], ["0%", "-78%"])
+
+  const snakePath =
+    "M 0,220 C 80,80 160,360 260,150 S 420,400 540,130 S 680,380 780,160 S 900,410 1020,180 S 1150,360 1250,220"
 
   return (
-    <section ref={targetRef} className="relative h-[350vh] text-[#e2e8f0]">
+    <section ref={targetRef} id="journey" className="relative h-[320vh] sm:h-[350vh] text-[#e2e8f0]">
       <div className="sticky top-0 flex h-screen items-center overflow-hidden">
-        {/* Fixed Header Top Left */}
-        <div className="absolute top-8 left-6 md:left-12 z-20">
-          <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tight leading-[0.9] text-white/90">
+        
+        {/* Header Kiri Atas - Responsive Spacing & Text */}
+        <div className="absolute top-4 sm:top-8 left-4 sm:left-6 md:left-12 z-20">
+          <h2 className="text-2xl sm:text-4xl md:text-6xl font-black uppercase tracking-tight leading-[0.9] text-white/90">
             Career{" "}
             <span className="italic font-serif font-normal text-[#a3e635]">Chronicles</span>
           </h2>
-          <p className="mt-2 font-mono text-[10px] md:text-xs uppercase tracking-[0.25em] text-white/40">
+          <p className="mt-1 sm:mt-2 font-mono text-[8px] sm:text-[10px] md:text-xs uppercase tracking-[0.2em] sm:tracking-[0.25em] text-white/40">
             A journey of growth and impact
           </p>
         </div>
 
-        {/* Fixed Header Top Right */}
-        <div className="absolute top-10 right-6 md:right-12 z-20 hidden md:block text-right">
-          <span className="font-mono text-xs tracking-widest text-[#a3e635]">TIMELINE</span>
-          <p className="font-mono text-[10px] text-white/40 tracking-widest mt-0.5">2020 - PRESENT</p>
+        {/* Header Kanan Atas */}
+        <div className="absolute top-6 sm:top-10 right-4 sm:right-6 md:right-12 z-20 hidden sm:block text-right">
+          <span className="font-mono text-[10px] sm:text-xs tracking-widest text-[#a3e635]">TIMELINE</span>
+          <p className="font-mono text-[9px] sm:text-[10px] text-white/40 tracking-widest mt-0.5">2020 - PRESENT</p>
         </div>
 
-        {/* Horizontal Track - Ditambahkan pt-36 md:pt-44 agar kartu berada di bawah header */}
-        <motion.div style={{ x }} className="flex items-start gap-16 md:gap-24 pl-6 md:pl-12 pr-28 pt-40 md:pt-48">
-          {careerData.map((item) => (
-            <div
+        {/* Track Horizontal */}
+        <motion.div style={{ x }} className="relative flex items-start gap-8 sm:gap-16 md:gap-24 pl-4 sm:pl-8 md:pl-12 pr-16 sm:pr-28 pt-28 sm:pt-36 md:pt-48">
+          
+          {/* --- GARIS 3D TUBE (KETEBALAN LEBIH TIPIS & STYLISH) --- */}
+          <svg
+            className="absolute top-[-20px] sm:top-[-40px] left-0 w-[125%] h-[120%] pointer-events-none -z-10 overflow-visible"
+            viewBox="0 0 1250 500"
+            preserveAspectRatio="none"
+            fill="none"
+          >
+            <defs>
+              <linearGradient id="tubeGradient3D" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#ecfccb" />
+                <stop offset="35%" stopColor="#a3e635" />
+                <stop offset="70%" stopColor="#65a30d" />
+                <stop offset="100%" stopColor="#3f6212" />
+              </linearGradient>
+
+              <filter id="tubeShadow3D" x="-30%" y="-30%" width="160%" height="160%">
+                <feDropShadow dx="0" dy="16" stdDeviation="10" floodColor="#000000" floodOpacity="0.8" />
+                <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="#1a2e05" floodOpacity="0.5" />
+              </filter>
+
+              <filter id="highlightBlur">
+                <feGaussianBlur stdDeviation="2" />
+              </filter>
+            </defs>
+
+            {/* Track Putus-Putus Redup */}
+            <path
+              d={snakePath}
+              stroke="#a3e635"
+              strokeWidth="2"
+              strokeOpacity="0.15"
+              strokeDasharray="6 6"
+            />
+
+            {/* 1. Bayangan Dasar (Drop Shadow) - Tebal 34px (Sebelumnya 56px) */}
+            <motion.path
+              d={snakePath}
+              stroke="#000000"
+              strokeWidth="34"
+              strokeLinecap="round"
+              strokeOpacity="0.75"
+              filter="url(#tubeShadow3D)"
+              style={{ pathLength: scrollYProgress }}
+            />
+
+            {/* 2. Tabung Utama Gradasi (Main Volume Tube) - Tebal 28px (Sebelumnya 48px) */}
+            <motion.path
+              d={snakePath}
+              stroke="url(#tubeGradient3D)"
+              strokeWidth="28"
+              strokeLinecap="round"
+              style={{ pathLength: scrollYProgress }}
+            />
+
+            {/* 3. Inner Shadow Tabung - Tebal 24px (Sebelumnya 44px) */}
+            <motion.path
+              d={snakePath}
+              stroke="#1a2e05"
+              strokeWidth="24"
+              strokeLinecap="round"
+              strokeOpacity="0.35"
+              style={{ pathLength: scrollYProgress }}
+            />
+
+            {/* 4. Kilauan Cahaya (Specular Highlight) - Tebal 6px (Sebelumnya 12px) */}
+            <motion.path
+              d={snakePath}
+              stroke="#ffffff"
+              strokeWidth="6"
+              strokeLinecap="round"
+              strokeOpacity="0.85"
+              filter="url(#highlightBlur)"
+              style={{ pathLength: scrollYProgress }}
+            />
+          </svg>
+
+          {careerData.map((item, index) => (
+            <CareerCard
               key={item.id}
-              className={`group relative flex flex-col ${item.align} w-[80vw] sm:w-[440px] md:w-[520px] shrink-0 ${item.offset}`}
-            >
-              <span className="pointer-events-none select-none font-mono text-[13vw] sm:text-8xl md:text-9xl font-black text-white/[0.04] absolute -top-10 md:-top-16 left-0 leading-none -z-10">
-                {item.id}
-              </span>
-
-              <span className="font-mono text-[10px] md:text-xs tracking-[0.2em] text-[#a3e635] uppercase">
-                {item.period}
-              </span>
-
-              <h4
-                className={`${sizeMap[item.size]} font-black uppercase tracking-tight leading-[0.92] text-white mt-1 mb-3`}
-              >
-                {item.company}
-              </h4>
-
-              <div className={`flex items-center gap-3 ${item.align === "text-right" ? "justify-end" : ""}`}>
-                <img 
-                  src={item.image || "/placeholder.svg"} 
-                  alt={item.company} 
-                  className="h-54 md:h-72 w-auto object-contain grayscale opacity-50 group-hover:opacity-90 group-hover:grayscale-0 transition-all duration-500" 
-                />
-              </div>
-
-              <span className="font-mono text-[10px] md:text-xs uppercase tracking-widest text-white/50 mt-5">
-                {item.role}
-              </span>
-
-              <p
-                className={`italic font-serif text-white/70 leading-relaxed mt-5 ${
-                  item.size === "xl" ? "text-lg md:text-xl max-w-[85%]" : "text-sm md:text-base max-w-[90%]"
-                } ${item.align === "text-right" ? "ml-auto" : ""}`}
-              >
-                {item.quote}
-              </p>
-
-              <div
-                className={`mt-4 font-mono text-[10px] uppercase tracking-widest text-white/35 ${
-                  item.align === "text-right" ? "text-right" : ""
-                }`}
-              >
-                {item.tags.map((tag, i) => (
-                  <span key={tag}>
-                    <span className="group-hover:text-[#a3e635] transition-colors">{tag}</span>
-                    {i < item.tags.length - 1 && <span className="mx-2 text-white/15">·</span>}
-                  </span>
-                ))}
-              </div>
-
-              <div className={`mt-6 h-px w-16 bg-[#a3e635]/30 ${item.align === "text-right" ? "ml-auto" : ""}`} />
-            </div>
+              item={item}
+              index={index}
+              totalItems={careerData.length}
+              scrollYProgress={scrollYProgress}
+            />
           ))}
 
-          <div className="flex flex-col justify-center w-[260px] shrink-0 lg:mt-8">
-            <span className="font-mono text-xs text-[#a3e635] uppercase tracking-[0.25em] mb-3">
+          {/* Kartu Penutup "What is Next?" */}
+          <div className="flex flex-col justify-center w-[200px] sm:w-[260px] shrink-0 mt-4 sm:mt-8">
+            <span className="font-mono text-[10px] sm:text-xs text-[#a3e635] uppercase tracking-[0.2em] mb-2 sm:mb-3">
               What is next?
             </span>
-            <h4 className="text-3xl md:text-4xl font-black uppercase text-white tracking-tight leading-[0.95] mb-6">
+            <h4 className="text-xl sm:text-3xl md:text-4xl font-black uppercase text-white tracking-tight leading-[0.95] mb-4 sm:mb-6">
               Ready for the next race
             </h4>
             <a
               href="#contact"
-              className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-[#a3e635] hover:text-white transition-colors w-fit"
+              className="inline-flex items-center gap-2 font-mono text-[10px] sm:text-xs uppercase tracking-widest text-[#a3e635] hover:text-white transition-colors w-fit"
             >
               Get in touch
               <span className="inline-block translate-y-[1px]">-&gt;</span>

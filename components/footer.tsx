@@ -57,7 +57,7 @@ export default function Footer() {
   }
 
   return (
-    <footer className="bg-fino-accent pt-0 px-3 sm:px-6 md:px-8 min-h-screen flex flex-col justify-end relative pb-5 overflow-x-hidden">
+    <footer id="contact" className="bg-fino-accent pt-0 px-3 sm:px-6 md:px-8 min-h-screen flex flex-col justify-end relative pb-5 overflow-x-hidden">
       <div className="absolute top-0 left-0 right-0 h-48 md:h-90 bg-gradient-to-b from-[#111111] to-fino-accent z-0" />
 
       {/* Main Dark Card Container */}

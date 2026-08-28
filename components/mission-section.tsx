@@ -67,7 +67,7 @@ export default function MissionSection() {
 
   return (
     <section
-      id="mission"
+      id="aboutme"
       ref={sectionRef}
       className="relative min-h-screen text-fino-text-light flex items-center justify-center px-4"
     >
