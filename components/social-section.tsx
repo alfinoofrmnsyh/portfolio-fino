@@ -5,6 +5,7 @@
 import { motion, AnimatePresence } from "framer-motion"
 import Image from "next/image"
 import { useState, useEffect, useRef } from "react"
+import FlexCarousel, { FlexCarouselHandle, FlexCarouselItem } from "@/components/flex-carousel"
 
 interface ProjectCard {
   image: string
@@ -98,24 +99,44 @@ function TechBadge({ label }: { label: string }) {
 
 export default function SocialSection() {
   const [currentIconIndex, setCurrentIconIndex] = useState(0)
+  const [activeIndex, setActiveIndex] = useState(0)
   const [selectedProject, setSelectedProject] = useState<ProjectCard | null>(null)
+  const [cardHeight, setCardHeight] = useState(0.35)
+  const [gap, setGap] = useState(12)
+  const [isMobile, setIsMobile] = useState(false)
+  const carouselRef = useRef<FlexCarouselHandle>(null)
 
-  const dragContainerRef = useRef<HTMLDivElement>(null)
-  const dragContentRef = useRef<HTMLDivElement>(null)
-  const [dragConstraint, setDragConstraint] = useState(0)
+  // Map projectCards to FlexCarousel items
+  const carouselItems: FlexCarouselItem[] = projectCards.map((p) => ({
+    src: p.image,
+    alt: p.title,
+    title: p.title,
+    subtitle: p.subtitle,
+    techStack: p.techStack,
+    original: p,
+  }))
 
-  // Measure carousel drag width
+  // Responsive cardHeight and gap for mobile vs tablet vs desktop
   useEffect(() => {
-    const measure = () => {
-      if (dragContainerRef.current && dragContentRef.current) {
-        const containerWidth = dragContainerRef.current.offsetWidth
-        const contentWidth = dragContentRef.current.scrollWidth
-        setDragConstraint(Math.max(contentWidth - containerWidth, 0))
+    const handleResize = () => {
+      const w = window.innerWidth
+      if (w < 640) {
+        setCardHeight(0.35)
+        setGap(12)
+        setIsMobile(true)
+      } else if (w < 1024) {
+        setCardHeight(0.46)
+        setGap(16)
+        setIsMobile(false)
+      } else {
+        setCardHeight(0.56)
+        setGap(20)
+        setIsMobile(false)
       }
     }
-    measure()
-    window.addEventListener("resize", measure)
-    return () => window.removeEventListener("resize", measure)
+    handleResize()
+    window.addEventListener("resize", handleResize)
+    return () => window.removeEventListener("resize", handleResize)
   }, [])
 
   // Icon animation interval
@@ -135,15 +156,13 @@ export default function SocialSection() {
     return () => window.removeEventListener("keydown", handleKeyDown)
   }, [])
 
-  const centerIndex = (projectCards.length - 1) / 2
-
   return (
-    <section id="project" className="relative bg-[#111111] text-white py-16 px-4 md:px-12 overflow-hidden">
-      <div className="max-w-7xl mx-auto mb-20">
-        
+    <section id="project" className="relative bg-[#111111] text-white py-10 sm:py-16 overflow-hidden w-full">
+      {/* Section Header */}
+      <div className="max-w-7xl mx-auto px-4 md:px-12 text-center mb-2 sm:mb-4">
         {/* Animated Hand Icon */}
-        <div className="relative h-12 mb-2 flex items-center justify-center">
-          <div className="relative h-full w-auto max-h-[40px] aspect-square">
+        <div className="relative h-9 sm:h-12 mb-1 sm:mb-2 flex items-center justify-center">
+          <div className="relative h-full w-auto max-h-[32px] sm:max-h-[40px] aspect-square">
             {handIcons.map((icon, index) => (
               <div
                 key={icon}
@@ -157,163 +176,112 @@ export default function SocialSection() {
           </div>
         </div>
 
-        {/* Section Title */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
           viewport={{ once: true }}
-          className="text-center mb-10"
         >
-          <h2 className="text-3xl md:text-5xl font-bold uppercase tracking-tighter text-white">My Featured</h2>
-          <h3 className="text-3xl md:text-5xl font-brier mt-1 text-zinc-400">Projects</h3>
+          <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold uppercase tracking-tighter text-white">My Featured</h2>
+          <h3 className="text-2xl sm:text-3xl md:text-5xl font-brier mt-0.5 sm:mt-1 text-zinc-400">Projects</h3>
+          <p className="mt-1.5 sm:mt-2 text-[10px] sm:text-xs md:text-sm text-zinc-400 font-mono uppercase tracking-wider">
+            Drag or scroll to explore • Tap any project to view details
+          </p>
         </motion.div>
+      </div>
 
-        {/* Main Cards Layout */}
-        <div className="relative mb-12">
-          
-          {/* Mobile Layout: Draggable Carousel */}
-          <div ref={dragContainerRef} className="md:hidden overflow-hidden touch-pan-y">
-            <motion.div
-              ref={dragContentRef}
-              className="flex gap-4 px-4 py-4 w-max cursor-grab active:cursor-grabbing"
-              drag="x"
-              dragConstraints={{ left: -dragConstraint, right: 0 }}
-              dragElastic={0.08}
-              dragTransition={{ power: 0.2, timeConstant: 200 }}
-              whileTap={{ cursor: "grabbing" }}
-            >
-              {projectCards.map((project, i) => (
-                <div
-                  key={i}
-                  onClick={() => setSelectedProject(project)}
-                  className="shrink-0 w-[280px] h-[400px] bg-zinc-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col cursor-pointer select-none"
-                >
-                  <div className="relative w-full h-[52%] bg-zinc-950 pointer-events-none">
-                    <Image
-                      src={project.image || "/placeholder.svg"}
-                      alt={project.title}
-                      fill
-                      draggable={false}
-                      className="object-cover"
-                    />
-                  </div>
-                  <div className="p-4 flex flex-col justify-between flex-grow bg-zinc-900">
-                    <div>
-                      <h4 className="font-bold text-base text-white uppercase tracking-tight line-clamp-1">
-                        {project.title}
-                      </h4>
-                      <p className="text-xs text-zinc-400 font-medium mt-0.5 line-clamp-2">{project.subtitle}</p>
-                    </div>
-                    <div className="flex flex-wrap gap-1.5 mt-3">
-                      {project.techStack.map((tech, idx) => (
-                        <TechBadge key={idx} label={tech} />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </motion.div>
+      {/* React Bits Flex Carousel (Fullscreen Edge-to-Edge WebGL) */}
+      <div className="relative w-full h-[380px] sm:h-[480px] md:h-[580px] lg:h-[660px] my-1 sm:my-2 overflow-hidden">
+        <FlexCarousel
+          ref={carouselRef}
+          items={carouselItems}
+          preset="liquid"
+          intro="rise"
+          cardHeight={cardHeight}
+          gap={gap}
+          radius={16}
+          fit="natural"
+          bend={isMobile ? 0.16 : 0.32}
+          reach={isMobile ? 0.20 : 0.36}
+          dispersion={isMobile ? 0.20 : 0.42}
+          squeeze={isMobile ? 0.10 : 0.18}
+          focusOnClick={false}
+          captureWheel={false}
+          onChange={(idx) => setActiveIndex(idx)}
+          onSelect={(_, item) => setSelectedProject(item.original)}
+        />
 
-            {/* Pagination Indicators */}
-            <div className="flex justify-center gap-1.5 mt-2">
-              {projectCards.map((_, i) => (
-                <div key={i} className="h-1 w-1 rounded-full bg-white/20" />
+        {/* Floating Prev / Next Controls near screen edges */}
+        <button
+          onClick={() => carouselRef.current?.prev()}
+          className="absolute left-2 sm:left-6 md:left-8 top-1/2 -translate-y-1/2 z-30 w-8 h-8 sm:w-11 sm:h-11 rounded-full bg-black/60 hover:bg-black/90 border border-white/15 text-white flex items-center justify-center transition-all hover:scale-110 active:scale-95 cursor-pointer shadow-2xl backdrop-blur-md text-xs sm:text-base"
+          aria-label="Previous project"
+        >
+          ←
+        </button>
+        <button
+          onClick={() => carouselRef.current?.next()}
+          className="absolute right-2 sm:right-6 md:right-8 top-1/2 -translate-y-1/2 z-30 w-8 h-8 sm:w-11 sm:h-11 rounded-full bg-black/60 hover:bg-black/90 border border-white/15 text-white flex items-center justify-center transition-all hover:scale-110 active:scale-95 cursor-pointer shadow-2xl backdrop-blur-md text-xs sm:text-base"
+          aria-label="Next project"
+        >
+          →
+        </button>
+      </div>
+
+      {/* Active Project Info Bar & CTA */}
+      {projectCards[activeIndex] && (
+        <div className="max-w-5xl mx-auto px-3 sm:px-6">
+          <motion.div
+            key={activeIndex}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="flex flex-col sm:flex-row items-center justify-between gap-2.5 sm:gap-4 mt-1.5 sm:mt-4 px-3.5 sm:px-6 py-2.5 sm:py-3.5 rounded-xl bg-zinc-900/60 border border-white/5 backdrop-blur-sm"
+          >
+            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1.5 sm:gap-2">
+              <span className="text-[10px] sm:text-xs font-mono uppercase text-zinc-500 mr-1">Tech Stack:</span>
+              {projectCards[activeIndex].techStack.map((tech, idx) => (
+                <TechBadge key={idx} label={tech} />
               ))}
             </div>
-          </div>
 
-          {/* Desktop Layout: Animated Fan Stack */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1, ease: "easeOut" }}
-            viewport={{ once: true }}
-            className="hidden md:flex relative h-[580px] items-center justify-center"
-          >
-            {projectCards.map((project, i) => {
-              const offset = i - centerIndex
-
-              return (
-                <motion.div
-                  key={i}
-                  onClick={() => setSelectedProject(project)}
-                  initial={{ opacity: 0, rotate: 0, scale: 0 }}
-                  whileInView={{
-                    opacity: 1,
-                    rotate: offset * 4.5,
-                    scale: 1 - Math.abs(offset) * 0.025,
-                    x: offset * 95,
-                    y: Math.abs(offset) * 18,
-                  }}
-                  transition={{
-                    duration: 0.8,
-                    delay: 0.1 + i * 0.08,
-                    type: "spring",
-                    stiffness: 60,
-                    damping: 12,
-                  }}
-                  viewport={{ once: true }}
-                  whileHover={{
-                    rotate: 0,
-                    scale: 1.05,
-                    zIndex: 40,
-                    y: -30,
-                    transition: { duration: 0.3 },
-                  }}
-                  className="absolute w-[330px] h-[430px] bg-zinc-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden cursor-pointer origin-bottom flex flex-col"
-                  style={{ zIndex: 20 - Math.round(Math.abs(offset)) }}
-                >
-                  <div className="relative w-full h-[52%] bg-zinc-950">
-                    <Image src={project.image || "/placeholder.svg"} alt={project.title} fill className="object-cover" />
-                  </div>
-
-                  <div className="p-5 flex flex-col justify-between flex-grow bg-zinc-900">
-                    <div>
-                      <h4 className="font-bold text-lg text-white uppercase tracking-tight line-clamp-1">
-                        {project.title}
-                      </h4>
-                      <p className="text-sm text-zinc-400 font-medium mt-0.5 line-clamp-2">{project.subtitle}</p>
-                    </div>
-
-                    <div className="flex flex-wrap gap-1.5 mt-3">
-                      {project.techStack.map((tech, idx) => (
-                        <TechBadge key={idx} label={tech} />
-                      ))}
-                    </div>
-                  </div>
-                </motion.div>
-              )
-            })}
+            <button
+              onClick={() => setSelectedProject(projectCards[activeIndex])}
+              className="w-full sm:w-auto justify-center inline-flex items-center gap-1.5 sm:gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg bg-[#a3e635] text-black text-xs font-bold uppercase tracking-wider hover:bg-white hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-lg shadow-[#a3e635]/20 shrink-0"
+            >
+              <span>View Details</span>
+              <span>↗</span>
+            </button>
           </motion.div>
         </div>
-      </div>
+      )}
 
       {/* Project Detail Modal */}
       <AnimatePresence>
         {selectedProject && (
           <div 
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
+            className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/90 backdrop-blur-md"
             onClick={() => setSelectedProject(null)}
           >
             <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              initial={{ opacity: 0, scale: 0.92, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              exit={{ opacity: 0, scale: 0.92, y: 20 }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
               onClick={(e) => e.stopPropagation()}
-              className="relative w-full max-w-lg bg-zinc-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+              className="relative w-full max-w-lg bg-zinc-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] sm:max-h-[90vh]"
             >
               {/* Close Button */}
               <button
                 onClick={() => setSelectedProject(null)}
-                className="absolute top-4 right-4 z-10 w-9 h-9 bg-black/60 hover:bg-black text-white rounded-full flex items-center justify-center border border-white/10 transition-colors cursor-pointer"
+                className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 w-8 h-8 sm:w-9 sm:h-9 bg-black/70 hover:bg-black text-white rounded-full flex items-center justify-center border border-white/10 transition-colors cursor-pointer text-sm"
                 aria-label="Close modal"
               >
                 ✕
               </button>
 
               {/* Modal Image */}
-              <div className="relative w-full h-64 bg-zinc-950">
+              <div className="relative w-full h-48 sm:h-64 bg-zinc-950 shrink-0">
                 <Image
                   src={selectedProject.image || "/placeholder.svg"}
                   alt={selectedProject.title}
@@ -323,15 +291,15 @@ export default function SocialSection() {
               </div>
 
               {/* Modal Content */}
-              <div className="p-6 flex flex-col gap-4 overflow-y-auto">
+              <div className="p-4 sm:p-6 flex flex-col gap-3 sm:gap-4 overflow-y-auto">
                 <div>
-                  <h3 className="text-xl font-bold text-white uppercase tracking-tight">{selectedProject.title}</h3>
-                  <p className="text-sm text-zinc-300 font-medium mt-2 leading-relaxed">{selectedProject.subtitle}</p>
+                  <h3 className="text-lg sm:text-xl font-bold text-white uppercase tracking-tight">{selectedProject.title}</h3>
+                  <p className="text-xs sm:text-sm text-zinc-300 font-medium mt-1.5 sm:mt-2 leading-relaxed">{selectedProject.subtitle}</p>
                 </div>
 
                 <div>
-                  <h4 className="text-xs font-mono uppercase text-zinc-500 mb-2">Tech Stack</h4>
-                  <div className="flex flex-wrap gap-2">
+                  <h4 className="text-[10px] sm:text-xs font-mono uppercase text-zinc-500 mb-2">Tech Stack</h4>
+                  <div className="flex flex-wrap gap-1.5 sm:gap-2">
                     {selectedProject.techStack.map((tech, idx) => (
                       <TechBadge key={idx} label={tech} />
                     ))}
