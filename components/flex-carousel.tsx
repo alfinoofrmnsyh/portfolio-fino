@@ -918,7 +918,7 @@ const FlexCarousel = forwardRef<FlexCarouselHandle, FlexCarouselProps>(function 
 
       const cardH = m.cardH;
       let halfW = (s.lensWidth * width) / 2;
-      let halfH = (s.lensHeight * width) / 2;
+      let halfH = (s.lensHeight * Math.min(width, height * 1.6)) / 2;
       const squash = Math.abs(deform) * liquidAmount;
       halfW *= 1 + squash * 0.16;
       halfH *= 1 - squash * 0.08;
@@ -1009,7 +1009,9 @@ const FlexCarousel = forwardRef<FlexCarouselHandle, FlexCarouselProps>(function 
         const inner = Math.max(4, s.reach * (spanW + spanH) * 0.5);
         lensUniforms.uInner.value = inner;
         lensUniforms.uOuter.value = inner * 1.6;
-        lensUniforms.uFlow.value = s.bend * (spanW + spanH) * 0.45;
+        const availableHeadroom = Math.max(10, (height - cardH) * 0.38);
+        const calcFlow = s.bend * (spanW + spanH) * 0.45;
+        lensUniforms.uFlow.value = Math.min(calcFlow, availableHeadroom);
         lensUniforms.uCurl.value = s.curl === 'rise' ? 1 : s.curl === 'fall' ? -1 : 0;
         lensUniforms.uDispersion.value = s.dispersion * 0.12 * (1 + Math.abs(deform) * liquidAmount * 1.2);
         lensUniforms.uStrength.value = effects.strength * (1 - focusEase);

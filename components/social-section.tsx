@@ -121,15 +121,15 @@ export default function SocialSection() {
     const handleResize = () => {
       const w = window.innerWidth
       if (w < 640) {
-        setCardHeight(0.35)
+        setCardHeight(0.38)
         setGap(12)
         setIsMobile(true)
       } else if (w < 1024) {
-        setCardHeight(0.46)
+        setCardHeight(0.40)
         setGap(16)
         setIsMobile(false)
       } else {
-        setCardHeight(0.56)
+        setCardHeight(0.42)
         setGap(20)
         setIsMobile(false)
       }
@@ -166,9 +166,8 @@ export default function SocialSection() {
             {handIcons.map((icon, index) => (
               <div
                 key={icon}
-                className={`absolute inset-0 transition-opacity duration-0 ${
-                  index === currentIconIndex ? "opacity-100" : "opacity-0"
-                }`}
+                className={`absolute inset-0 transition-opacity duration-0 ${index === currentIconIndex ? "opacity-100" : "opacity-0"
+                  }`}
               >
                 <img src={icon || "/placeholder.svg"} className="h-full w-full object-contain" alt="Animated hand icon" />
               </div>
@@ -191,20 +190,22 @@ export default function SocialSection() {
       </div>
 
       {/* React Bits Flex Carousel (Fullscreen Edge-to-Edge WebGL) */}
-      <div className="relative w-full h-[380px] sm:h-[480px] md:h-[580px] lg:h-[660px] my-1 sm:my-2 overflow-hidden">
+      <div className="relative w-full h-[360px] sm:h-[460px] md:h-[560px] lg:h-[660px] my-1 sm:my-2 overflow-hidden">
         <FlexCarousel
           ref={carouselRef}
           items={carouselItems}
-          preset="liquid"
+          preset="ribbon"
+          tilt={0}
           intro="rise"
+          captions={false}
           cardHeight={cardHeight}
           gap={gap}
-          radius={16}
+          radius={18}
           fit="natural"
-          bend={isMobile ? 0.16 : 0.32}
-          reach={isMobile ? 0.20 : 0.36}
-          dispersion={isMobile ? 0.20 : 0.42}
-          squeeze={isMobile ? 0.10 : 0.18}
+          bend={isMobile ? 0.16 : 0.24}
+          reach={isMobile ? 0.20 : 0.28}
+          dispersion={isMobile ? 0.15 : 0.28}
+          squeeze={isMobile ? 0.08 : 0.12}
           focusOnClick={false}
           captureWheel={false}
           onChange={(idx) => setActiveIndex(idx)}
@@ -228,38 +229,11 @@ export default function SocialSection() {
         </button>
       </div>
 
-      {/* Active Project Info Bar & CTA */}
-      {projectCards[activeIndex] && (
-        <div className="max-w-5xl mx-auto px-3 sm:px-6">
-          <motion.div
-            key={activeIndex}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            className="flex flex-col sm:flex-row items-center justify-between gap-2.5 sm:gap-4 mt-1.5 sm:mt-4 px-3.5 sm:px-6 py-2.5 sm:py-3.5 rounded-xl bg-zinc-900/60 border border-white/5 backdrop-blur-sm"
-          >
-            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1.5 sm:gap-2">
-              <span className="text-[10px] sm:text-xs font-mono uppercase text-zinc-500 mr-1">Tech Stack:</span>
-              {projectCards[activeIndex].techStack.map((tech, idx) => (
-                <TechBadge key={idx} label={tech} />
-              ))}
-            </div>
-
-            <button
-              onClick={() => setSelectedProject(projectCards[activeIndex])}
-              className="w-full sm:w-auto justify-center inline-flex items-center gap-1.5 sm:gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg bg-[#a3e635] text-black text-xs font-bold uppercase tracking-wider hover:bg-white hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-lg shadow-[#a3e635]/20 shrink-0"
-            >
-              <span>View Details</span>
-              <span>↗</span>
-            </button>
-          </motion.div>
-        </div>
-      )}
 
       {/* Project Detail Modal */}
       <AnimatePresence>
         {selectedProject && (
-          <div 
+          <div
             className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/90 backdrop-blur-md"
             onClick={() => setSelectedProject(null)}
           >
