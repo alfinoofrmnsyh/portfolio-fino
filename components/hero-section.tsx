@@ -40,7 +40,7 @@ export default function HeroSection() {
 
   return (
     <section id="home" ref={containerRef} className="relative h-[180vh]">
-      <div className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center">
+      <div className="sticky top-0 h-screen h-[100dvh] min-h-[100dvh] w-full overflow-hidden flex items-center justify-center transform-gpu">
         
         {/* Background Text Layer */}
         <motion.div

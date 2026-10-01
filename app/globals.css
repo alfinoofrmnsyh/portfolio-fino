@@ -171,8 +171,8 @@
   }
 
   html {
-    scroll-behavior: smooth;
-    /* Removendo overflow-x: hidden para permitir scroll horizontal controlado na masonry */
+    scroll-behavior: auto;
+    /* Lenis menangani smooth scroll; scroll-behavior: auto mencegah konflik & stutter pada iOS Safari */
   }
 
   h1,

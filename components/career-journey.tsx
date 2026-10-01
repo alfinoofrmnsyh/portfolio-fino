@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef } from "react"
+import { useRef, useState, useEffect } from "react"
 import { motion, useScroll, useTransform, MotionValue } from "framer-motion"
 
 const careerData = [
@@ -111,49 +111,44 @@ function CareerCard({
   item,
   index,
   totalItems,
-  scrollYProgress,
+  smoothProgress,
 }: {
   item: (typeof careerData)[0]
   index: number
   totalItems: number
-  scrollYProgress: MotionValue<number>
+  smoothProgress: MotionValue<number>
 }) {
   const triggerPoint = index / (totalItems - 1)
   const activeStart = Math.max(0, triggerPoint - 0.08)
   const activePeak = triggerPoint
   const activeEnd = Math.min(1, triggerPoint + 0.12)
 
-  const filterGrayscale = useTransform(
-    scrollYProgress,
+  // Gabungan filter CSS valid (grayscale + drop-shadow) untuk performa halus di iOS
+  const imageFilter = useTransform(
+    smoothProgress,
     [activeStart, activePeak, activeEnd],
-    ["grayscale(100%)", "grayscale(0%)", "grayscale(0%)"]
+    [
+      "grayscale(100%) drop-shadow(0 0 0px rgba(163,230,53,0))",
+      "grayscale(0%) drop-shadow(0 0 16px rgba(163,230,53,0.7))",
+      "grayscale(0%) drop-shadow(0 0 6px rgba(163,230,53,0.25))",
+    ]
   )
 
   const imageOpacity = useTransform(
-    scrollYProgress,
+    smoothProgress,
     [activeStart, activePeak, activeEnd],
-    [0.4, 1, 1]
+    [0.45, 1, 0.95]
   )
 
   const imageScale = useTransform(
-    scrollYProgress,
+    smoothProgress,
     [activeStart, activePeak, activeEnd],
-    [0.96, 1.05, 1.01]
-  )
-
-  const glowFilter = useTransform(
-    scrollYProgress,
-    [activeStart, activePeak, activeEnd],
-    [
-      "drop-shadow(0 0 0px rgba(163,230,53,0))",
-      "drop-shadow(0 0 18px rgba(163,230,53,0.75))",
-      "drop-shadow(0 0 8px rgba(163,230,53,0.25))",
-    ]
+    [0.96, 1.04, 1.0]
   )
 
   return (
     <div
-      className={`group relative flex flex-col ${item.align} w-[78vw] sm:w-[420px] md:w-[500px] shrink-0 ${item.offset}`}
+      className={`group relative z-10 flex flex-col ${item.align} w-[78vw] sm:w-[420px] md:w-[500px] shrink-0 ${item.offset}`}
     >
       <span className="pointer-events-none select-none font-mono text-[14vw] sm:text-8xl md:text-9xl font-black text-white/[0.04] absolute -top-8 sm:-top-12 md:-top-16 left-0 leading-none -z-10">
         {item.id}
@@ -169,18 +164,17 @@ function CareerCard({
         {item.company}
       </h4>
 
-      {/* Gambar dengan Responsif Height */}
-      <div className={`flex items-center gap-3 ${item.align === "text-right" ? "justify-end" : ""}`}>
+      {/* Gambar dengan Responsif Height & tanpa bentrok CSS transition yang menyebabkan stutter di iPhone */}
+      <div className={`relative flex items-center gap-3 ${item.align === "text-right" ? "justify-end" : ""}`}>
         <motion.img
           src={item.image || "/placeholder.svg"}
           alt={item.company}
           style={{
-            filter: filterGrayscale,
+            filter: imageFilter,
             opacity: imageOpacity,
             scale: imageScale,
-            dropShadow: glowFilter,
           }}
-          className="h-36 sm:h-52 md:h-64 w-auto object-contain transition-all duration-300 group-hover:!grayscale-0 group-hover:!opacity-100 group-hover:!scale-105"
+          className="h-36 sm:h-52 md:h-64 w-auto object-contain will-change-transform"
         />
       </div>
 
@@ -216,21 +210,47 @@ function CareerCard({
 
 export default function CareerJourney() {
   const targetRef = useRef<HTMLDivElement>(null)
+  const trackRef = useRef<HTMLDivElement>(null)
+  const [maxScrollX, setMaxScrollX] = useState<number | null>(null)
+
+  useEffect(() => {
+    const calculateScroll = () => {
+      if (trackRef.current) {
+        const trackWidth = trackRef.current.scrollWidth
+        const viewportWidth = window.innerWidth
+        setMaxScrollX(Math.max(0, trackWidth - viewportWidth))
+      }
+    }
+
+    calculateScroll()
+    window.addEventListener("resize", calculateScroll)
+    return () => window.removeEventListener("resize", calculateScroll)
+  }, [])
 
   const { scrollYProgress } = useScroll({
     target: targetRef,
     offset: ["start start", "end end"],
   })
 
-  // Mengatur pergeseran track horizontal yang halus di desktop & HP
-  const x = useTransform(scrollYProgress, [0, 1], ["0%", "-78%"])
+  // Pastikan progress clamped antara 0 dan 1 (aman dari momentum overscroll iOS Safari)
+  const smoothProgress = useTransform(scrollYProgress, [0, 1], [0, 1], { clamp: true })
 
+  // Mencegah munculnya round dot ganjil di awal scroll di iOS Safari
+  const pathOpacity = useTransform(smoothProgress, [0, 0.008, 1], [0, 1, 1])
+
+  // Mengatur pergeseran track horizontal dinamis agar kartu terakhir tampil penuh di layar apa pun (termasuk iPhone 13)
+  const x = useTransform(
+    smoothProgress,
+    (p) => (maxScrollX !== null ? -p * maxScrollX : `-${p * 78}%`)
+  )
+
+  // Kurva snake 3D yang mengalir mulus, seimbang di tengah kartu dan tidak menabrak teks di HP maupun desktop
   const snakePath =
-    "M 0,220 C 80,80 160,360 260,150 S 420,400 540,130 S 680,380 780,160 S 900,410 1020,180 S 1150,360 1250,220"
+    "M 0,240 C 70,180 140,300 210,240 S 350,180 420,240 S 560,300 630,240 S 770,180 840,240 S 980,300 1050,240 S 1190,200 1250,240"
 
   return (
     <section ref={targetRef} id="journey" className="relative h-[320vh] sm:h-[350vh] text-[#e2e8f0]">
-      <div className="sticky top-0 flex h-screen items-center overflow-hidden">
+      <div className="sticky top-0 flex h-screen h-[100dvh] min-h-[100dvh] items-center overflow-hidden transform-gpu">
         
         {/* Header Kiri Atas - Responsive Spacing & Text */}
         <div className="absolute top-4 sm:top-8 left-4 sm:left-6 md:left-12 z-20">
@@ -250,34 +270,31 @@ export default function CareerJourney() {
         </div>
 
         {/* Track Horizontal */}
-        <motion.div style={{ x }} className="relative flex items-start gap-8 sm:gap-16 md:gap-24 pl-4 sm:pl-8 md:pl-12 pr-16 sm:pr-28 pt-28 sm:pt-36 md:pt-48">
+        <motion.div
+          ref={trackRef}
+          style={{ x }}
+          className="relative flex items-start gap-8 sm:gap-16 md:gap-24 pl-4 sm:pl-8 md:pl-12 pr-16 sm:pr-28 pt-28 sm:pt-36 md:pt-48 will-change-transform transform-gpu"
+        >
           
-          {/* --- GARIS 3D TUBE (KETEBALAN LEBIH TIPIS & STYLISH) --- */}
+          {/* --- GARIS 3D TUBE (Vector murni bergradasi, zero-lag, 100% kompatibel iOS Safari) --- */}
           <svg
-            className="absolute top-[-20px] sm:top-[-40px] left-0 w-[125%] h-[120%] pointer-events-none -z-10 overflow-visible"
+            className="absolute top-0 left-0 w-full h-full pointer-events-none z-0 overflow-visible transform-gpu"
+            style={{ willChange: "transform" }}
             viewBox="0 0 1250 500"
             preserveAspectRatio="none"
             fill="none"
           >
             <defs>
-              <linearGradient id="tubeGradient3D" x1="0%" y1="0%" x2="100%" y2="100%">
+              {/* Gradasi silindris 3D realistis (atas terang, bawah bayangan) */}
+              <linearGradient id="tubeGradient3D" x1="0%" y1="0%" x2="0%" y2="100%">
                 <stop offset="0%" stopColor="#ecfccb" />
-                <stop offset="35%" stopColor="#a3e635" />
-                <stop offset="70%" stopColor="#65a30d" />
-                <stop offset="100%" stopColor="#3f6212" />
+                <stop offset="25%" stopColor="#bef264" />
+                <stop offset="60%" stopColor="#65a30d" />
+                <stop offset="100%" stopColor="#1a2e05" />
               </linearGradient>
-
-              <filter id="tubeShadow3D" x="-30%" y="-30%" width="160%" height="160%">
-                <feDropShadow dx="0" dy="16" stdDeviation="10" floodColor="#000000" floodOpacity="0.8" />
-                <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="#1a2e05" floodOpacity="0.5" />
-              </filter>
-
-              <filter id="highlightBlur">
-                <feGaussianBlur stdDeviation="2" />
-              </filter>
             </defs>
 
-            {/* Track Putus-Putus Redup */}
+            {/* 1. Track Panduan Putus-Putus Halus */}
             <path
               d={snakePath}
               stroke="#a3e635"
@@ -286,45 +303,56 @@ export default function CareerJourney() {
               strokeDasharray="6 6"
             />
 
-            {/* 1. Bayangan Dasar (Drop Shadow) - Tebal 34px (Sebelumnya 56px) */}
+            {/* 2. Bayangan Jatuh 3D (Cast Drop Shadow ke bawah, tanpa filter bug) */}
             <motion.path
               d={snakePath}
               stroke="#000000"
-              strokeWidth="34"
+              strokeWidth="22"
               strokeLinecap="round"
-              strokeOpacity="0.75"
-              filter="url(#tubeShadow3D)"
-              style={{ pathLength: scrollYProgress }}
+              strokeOpacity="0.45"
+              transform="translate(0, 7)"
+              style={{ pathLength: smoothProgress, opacity: pathOpacity }}
             />
 
-            {/* 2. Tabung Utama Gradasi (Main Volume Tube) - Tebal 28px (Sebelumnya 48px) */}
+            {/* 3. Outer Neon Ambient Glow (Pendaran hijau neon) */}
+            <motion.path
+              d={snakePath}
+              stroke="#a3e635"
+              strokeWidth="18"
+              strokeLinecap="round"
+              strokeOpacity="0.22"
+              style={{ pathLength: smoothProgress, opacity: pathOpacity }}
+            />
+
+            {/* 4. Tabung Utama Gradasi Silinder 3D */}
             <motion.path
               d={snakePath}
               stroke="url(#tubeGradient3D)"
-              strokeWidth="28"
+              strokeWidth="14"
               strokeLinecap="round"
-              style={{ pathLength: scrollYProgress }}
+              style={{ pathLength: smoothProgress, opacity: pathOpacity }}
             />
 
-            {/* 3. Inner Shadow Tabung - Tebal 24px (Sebelumnya 44px) */}
+            {/* 5. Inner Core Shadow (Kedalaman volume dalam tabung) */}
             <motion.path
               d={snakePath}
-              stroke="#1a2e05"
-              strokeWidth="24"
+              stroke="#142304"
+              strokeWidth="10"
               strokeLinecap="round"
               strokeOpacity="0.35"
-              style={{ pathLength: scrollYProgress }}
+              transform="translate(0, 1.5)"
+              style={{ pathLength: smoothProgress, opacity: pathOpacity }}
             />
 
-            {/* 4. Kilauan Cahaya (Specular Highlight) - Tebal 6px (Sebelumnya 12px) */}
+            {/* 6. Kilauan Cahaya Permukaan (Top Specular Highlight) */}
             <motion.path
               d={snakePath}
               stroke="#ffffff"
-              strokeWidth="6"
+              strokeWidth="3"
               strokeLinecap="round"
-              strokeOpacity="0.85"
-              filter="url(#highlightBlur)"
-              style={{ pathLength: scrollYProgress }}
+              strokeOpacity="0.9"
+              transform="translate(0, -2.5)"
+              style={{ pathLength: smoothProgress, opacity: pathOpacity }}
             />
           </svg>
 
@@ -334,12 +362,12 @@ export default function CareerJourney() {
               item={item}
               index={index}
               totalItems={careerData.length}
-              scrollYProgress={scrollYProgress}
+              smoothProgress={smoothProgress}
             />
           ))}
 
           {/* Kartu Penutup "What is Next?" */}
-          <div className="flex flex-col justify-center w-[200px] sm:w-[260px] shrink-0 mt-4 sm:mt-8">
+          <div className="relative z-10 flex flex-col justify-center w-[200px] sm:w-[260px] shrink-0 mt-4 sm:mt-8">
             <span className="font-mono text-[10px] sm:text-xs text-[#a3e635] uppercase tracking-[0.2em] mb-2 sm:mb-3">
               What is next?
             </span>
@@ -358,4 +386,4 @@ export default function CareerJourney() {
       </div>
     </section>
   )
-}
+}
